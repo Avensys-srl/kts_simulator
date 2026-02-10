@@ -6,47 +6,23 @@ function node(name, children = [], opts = {}) {
 }
 
 const SettingsP1 = node("Settings (Page 1/2)", [
-  node("Language settings"),
-  node("Screensaver"),
-  node("Date and time settings"),
+  node("Language settings", [], { id: "settings_language" }),
+  node("Screensaver", [], { id: "settings_screensaver" }),
+  node("Date and time settings", [], { id: "settings_datetime" }),
   node("Weekly settings", [
-    node("ON / OFF"),
-    node("Program", [
-      node("Days (Sunday - Saturday)"),
-      node("Back"),
-      node("Copy"),
-      node("Paste"),
-      node("Prog", [
-        node("Up to 4 time ranges"),
-        node("Start / Stop time"),
-        node("Fan speed per range")
-      ])
-    ]),
-    node("View"),
-    node("Seasonal icons", [
-      node("Snowflake (Summer mode)", [
-        node("Day setpoint summer"),
-        node("Night setpoint summer")
-      ]),
-      node("Sun (Winter mode)", [
-        node("Day setpoint winter"),
-        node("Night setpoint winter")
-      ])
-    ]),
-    node("Speed")
-  ])
+    node("ON / OFF", [], { id: "weekly_toggle" }),
+    node("Program", [], { id: "weekly_program" }),
+    node("View", [], { id: "weekly_view" }),
+    node("Clima settings", [], { id: "settings_clima" }),
+    node("Speed", [], { id: "weekly_speed" })
+  ], { id: "settings_weekly" })
 ], { pageGroup:"settings", pageIndex:1, pageTotal:2 });
 
 const SettingsP2 = node("Settings (Page 2/2)", [
-  node("Climate settings", [
-    node("Seasonal icons", [
-      node("Snowflake (Summer mode)", [ node("Temp setpoint summer") ]),
-      node("Sun (Winter mode)", [ node("Temp setpoint winter") ])
-    ])
-  ]),
-  node("Party settings"),
-  node("Password settings"),
-  node("Set RFM channel")
+  node("Climate settings", [], { id: "settings_clima" }),
+  node("Party settings", [], { id: "settings_party" }),
+  node("Password settings", [], { id: "settings_password" }),
+  node("Set RFM channel", [], { id: "settings_rfm" })
 ], { pageGroup:"settings", pageIndex:2, pageTotal:2 });
 
 const InputSettings = node("Input settings", [

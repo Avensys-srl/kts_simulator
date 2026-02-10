@@ -13,6 +13,21 @@ const state = {
     tValueText: "15 \u00b0C",
     speedPct: 0
   },
+  settings: {
+    language: "EN",
+    screensaverEnabled: true,
+    screensaverMinutes: 10,
+    weeklyEnabled: false,
+    partyEnabled: false,
+    partyMinutes: 60,
+    passwordEnabled: false,
+    rfmChannel: 1,
+    climaPreheater: false,
+    climaSummer: true,
+    climaWinter: false,
+    tempSun: 22,
+    tempMoon: 18
+  },
   timers: {
     homeInfoTimer: null
   }
@@ -79,6 +94,380 @@ function clampSel(){
   if(k.length===0){ state.nav.selectedIndex=0; return; }
   state.nav.selectedIndex = Math.max(0, Math.min(state.nav.selectedIndex, k.length-1));
 }
+
+function isScreenNode(n){
+  return !!(n && n.id);
+}
+
+function renderSettingsLanguage(){
+  const screen = document.getElementById("screen");
+  const langs = ["EN", "FR", "DE", "IT", "NL", "PL"];
+  screen.innerHTML = `
+    <div class="formScreen">
+      <div class="formTitle">SELECT LANGUAGE</div>
+      <div class="formGrid">
+        ${langs.map(l => `<div class="formBtn ${state.settings.language===l ? "selected" : ""}" data-lang="${l}">${l}</div>`).join("")}
+      </div>
+      <div class="formFooter">
+        <button class="formOk">OK</button>
+        <button class="formBack">BACK</button>
+      </div>
+    </div>
+  `;
+  screen.querySelectorAll(".formBtn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      state.settings.language = btn.getAttribute("data-lang");
+      renderSettingsLanguage();
+    });
+  });
+  screen.querySelector(".formBack").addEventListener("click", goBack);
+  screen.querySelector(".formOk").addEventListener("click", goBack);
+}
+
+function renderSettingsScreensaver(){
+  const screen = document.getElementById("screen");
+  screen.innerHTML = `
+    <div class="formScreen">
+      <div class="formTitle">CONFIG SCREEN SAVER</div>
+      <div class="formRow">
+        <div class="formBtn ${state.settings.screensaverEnabled ? "on" : "off"}" id="ssToggle">
+          ${state.settings.screensaverEnabled ? "ON" : "OFF"}
+        </div>
+        <div class="formFrame">
+          <div class="formValue">${state.settings.screensaverMinutes} min</div>
+        </div>
+        <div class="formCol">
+          <div class="formBtn" id="ssUp">▲</div>
+          <div class="formBtn" id="ssDn">▼</div>
+        </div>
+      </div>
+      <div class="formFooter">
+        <button class="formOk">OK</button>
+        <button class="formBack">BACK</button>
+      </div>
+    </div>
+  `;
+  screen.querySelector("#ssToggle").addEventListener("click", ()=>{
+    state.settings.screensaverEnabled = !state.settings.screensaverEnabled;
+    renderSettingsScreensaver();
+  });
+  screen.querySelector("#ssUp").addEventListener("click", ()=>{
+    if(!state.settings.screensaverEnabled) return;
+    state.settings.screensaverMinutes = Math.min(60, state.settings.screensaverMinutes + 1);
+    renderSettingsScreensaver();
+  });
+  screen.querySelector("#ssDn").addEventListener("click", ()=>{
+    if(!state.settings.screensaverEnabled) return;
+    state.settings.screensaverMinutes = Math.max(1, state.settings.screensaverMinutes - 1);
+    renderSettingsScreensaver();
+  });
+  screen.querySelector(".formBack").addEventListener("click", goBack);
+  screen.querySelector(".formOk").addEventListener("click", goBack);
+}
+
+function renderSettingsDateTime(){
+  const screen = document.getElementById("screen");
+  const now = new Date();
+  const dateText = now.toLocaleDateString("it-IT");
+  const timeText = now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+  screen.innerHTML = `
+    <div class="formScreen">
+      <div class="formTitle">DATE & TIME</div>
+      <div class="formRow">
+        <div class="formFrame wide">
+          <div class="formLabel">DATE</div>
+          <div class="formValue">${dateText}</div>
+        </div>
+        <div class="formFrame wide">
+          <div class="formLabel">TIME</div>
+          <div class="formValue">${timeText}</div>
+        </div>
+      </div>
+      <div class="formFooter">
+        <button class="formOk">OK</button>
+        <button class="formBack">BACK</button>
+      </div>
+    </div>
+  `;
+  screen.querySelector(".formBack").addEventListener("click", goBack);
+  screen.querySelector(".formOk").addEventListener("click", goBack);
+}
+
+function renderSettingsWeekly(){
+  const screen = document.getElementById("screen");
+  screen.innerHTML = `
+    <div class="formScreen">
+      <div class="formTitle">WEEKLY SETTINGS</div>
+      <div class="formRow">
+        <div class="formBtn ${state.settings.weeklyEnabled ? "on" : "off"}" id="weeklyToggle">
+          ${state.settings.weeklyEnabled ? "ON" : "OFF"}
+        </div>
+        <div class="formCol wide">
+          <div class="formBtn" data-nav="weekly_program">PROGRAM</div>
+          <div class="formBtn" data-nav="weekly_view">VIEW</div>
+        </div>
+      </div>
+      <div class="formRow">
+        <div class="formBtn" data-nav="settings_clima">CLIMA SETTINGS</div>
+        <div class="formBtn" data-nav="weekly_speed">SPEED</div>
+      </div>
+      <div class="formFooter">
+        <button class="formOk">OK</button>
+        <button class="formBack">BACK</button>
+      </div>
+    </div>
+  `;
+  screen.querySelector("#weeklyToggle").addEventListener("click", ()=>{
+    state.settings.weeklyEnabled = !state.settings.weeklyEnabled;
+    renderSettingsWeekly();
+  });
+  screen.querySelectorAll("[data-nav]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const id = btn.getAttribute("data-nav");
+      const node = { name: btn.textContent.trim(), id };
+      state.nav.stack.push(node);
+      state.nav.selectedIndex = 0;
+      render();
+    });
+  });
+  screen.querySelector(".formBack").addEventListener("click", goBack);
+  screen.querySelector(".formOk").addEventListener("click", goBack);
+}
+
+function renderSettingsClima(){
+  const screen = document.getElementById("screen");
+  screen.innerHTML = `
+    <div class="formScreen">
+      <div class="formTitle">CLIMA SETTINGS</div>
+      <div class="formRow">
+        <div class="formCol">
+          <div class="formBtn ${state.settings.climaPreheater ? "on" : "off"}" id="preheater">PREHEATER</div>
+          <div class="formBtn ${state.settings.climaSummer ? "on" : "off"}" id="summer">SUMMER</div>
+          <div class="formBtn ${state.settings.climaWinter ? "on" : "off"}" id="winter">WINTER</div>
+        </div>
+        <div class="formCol wide">
+          <div class="formFrame">
+            <div class="formLabel">SUN</div>
+            <div class="formValue">${state.settings.tempSun} °C</div>
+            <div class="formBtn" id="sunUp">▲</div>
+            <div class="formBtn" id="sunDn">▼</div>
+          </div>
+          <div class="formFrame">
+            <div class="formLabel">MOON</div>
+            <div class="formValue">${state.settings.tempMoon} °C</div>
+            <div class="formBtn" id="moonUp">▲</div>
+            <div class="formBtn" id="moonDn">▼</div>
+          </div>
+        </div>
+      </div>
+      <div class="formFooter">
+        <button class="formOk">OK</button>
+        <button class="formBack">BACK</button>
+      </div>
+    </div>
+  `;
+  screen.querySelector("#preheater").addEventListener("click", ()=>{
+    state.settings.climaPreheater = !state.settings.climaPreheater;
+    renderSettingsClima();
+  });
+  screen.querySelector("#summer").addEventListener("click", ()=>{
+    state.settings.climaSummer = !state.settings.climaSummer;
+    if(state.settings.climaSummer) state.settings.climaWinter = false;
+    renderSettingsClima();
+  });
+  screen.querySelector("#winter").addEventListener("click", ()=>{
+    state.settings.climaWinter = !state.settings.climaWinter;
+    if(state.settings.climaWinter) state.settings.climaSummer = false;
+    renderSettingsClima();
+  });
+  screen.querySelector("#sunUp").addEventListener("click", ()=>{
+    state.settings.tempSun = Math.min(32, state.settings.tempSun + 1);
+    renderSettingsClima();
+  });
+  screen.querySelector("#sunDn").addEventListener("click", ()=>{
+    state.settings.tempSun = Math.max(15, state.settings.tempSun - 1);
+    renderSettingsClima();
+  });
+  screen.querySelector("#moonUp").addEventListener("click", ()=>{
+    state.settings.tempMoon = Math.min(32, state.settings.tempMoon + 1);
+    renderSettingsClima();
+  });
+  screen.querySelector("#moonDn").addEventListener("click", ()=>{
+    state.settings.tempMoon = Math.max(15, state.settings.tempMoon - 1);
+    renderSettingsClima();
+  });
+  screen.querySelector(".formBack").addEventListener("click", goBack);
+  screen.querySelector(".formOk").addEventListener("click", goBack);
+}
+
+function renderSettingsParty(){
+  const screen = document.getElementById("screen");
+  screen.innerHTML = `
+    <div class="formScreen">
+      <div class="formTitle">SET PARTY TIMER</div>
+      <div class="formRow">
+        <div class="formBtn ${state.settings.partyEnabled ? "on" : "off"}" id="partyToggle">
+          ${state.settings.partyEnabled ? "ON" : "OFF"}
+        </div>
+        <div class="formFrame">
+          <div class="formValue">${state.settings.partyMinutes} min</div>
+        </div>
+        <div class="formCol">
+          <div class="formBtn" id="partyUp">▲</div>
+          <div class="formBtn" id="partyDn">▼</div>
+        </div>
+      </div>
+      <div class="formFooter">
+        <button class="formOk">OK</button>
+        <button class="formBack">BACK</button>
+      </div>
+    </div>
+  `;
+  screen.querySelector("#partyToggle").addEventListener("click", ()=>{
+    state.settings.partyEnabled = !state.settings.partyEnabled;
+    renderSettingsParty();
+  });
+  screen.querySelector("#partyUp").addEventListener("click", ()=>{
+    if(!state.settings.partyEnabled) return;
+    state.settings.partyMinutes = Math.min(240, state.settings.partyMinutes + 5);
+    renderSettingsParty();
+  });
+  screen.querySelector("#partyDn").addEventListener("click", ()=>{
+    if(!state.settings.partyEnabled) return;
+    state.settings.partyMinutes = Math.max(15, state.settings.partyMinutes - 5);
+    renderSettingsParty();
+  });
+  screen.querySelector(".formBack").addEventListener("click", goBack);
+  screen.querySelector(".formOk").addEventListener("click", goBack);
+}
+
+function renderSettingsPassword(){
+  const screen = document.getElementById("screen");
+  screen.innerHTML = `
+    <div class="formScreen">
+      <div class="formTitle">PASSWORD</div>
+      <div class="formRow">
+        <div class="formBtn ${state.settings.passwordEnabled ? "on" : "off"}" id="pwdToggle">
+          ${state.settings.passwordEnabled ? "ON" : "OFF"}
+        </div>
+        <div class="formBtn wide" id="pwdChange">CHANGE PASSWORD</div>
+      </div>
+      <div class="formFooter">
+        <button class="formOk">OK</button>
+        <button class="formBack">BACK</button>
+      </div>
+    </div>
+  `;
+  screen.querySelector("#pwdToggle").addEventListener("click", ()=>{
+    state.settings.passwordEnabled = !state.settings.passwordEnabled;
+    renderSettingsPassword();
+  });
+  screen.querySelector("#pwdChange").addEventListener("click", ()=>{
+    // placeholder action
+    renderSettingsPassword();
+  });
+  screen.querySelector(".formBack").addEventListener("click", goBack);
+  screen.querySelector(".formOk").addEventListener("click", goBack);
+}
+
+function renderSettingsRfm(){
+  const screen = document.getElementById("screen");
+  const channels = Array.from({length: 8}, (_,i)=>i+1);
+  screen.innerHTML = `
+    <div class="formScreen">
+      <div class="formTitle">RFM CHANGE CHANNEL</div>
+      <div class="formRow">
+        <div class="formFrame wide">
+          ${channels.map(ch => `<div class="formListItem ${state.settings.rfmChannel===ch ? "selected" : ""}">[${String(ch).padStart(2,"0")}] OK</div>`).join("")}
+        </div>
+        <div class="formCol">
+          <div class="formBtn" id="rfmUp">▲</div>
+          <div class="formBtn" id="rfmDn">▼</div>
+          <div class="formBtn" id="rfmScan">SCAN</div>
+        </div>
+      </div>
+      <div class="formFooter">
+        <button class="formOk">OK</button>
+        <button class="formBack">BACK</button>
+      </div>
+    </div>
+  `;
+  screen.querySelector("#rfmUp").addEventListener("click", ()=>{
+    state.settings.rfmChannel = Math.max(1, state.settings.rfmChannel - 1);
+    renderSettingsRfm();
+  });
+  screen.querySelector("#rfmDn").addEventListener("click", ()=>{
+    state.settings.rfmChannel = Math.min(8, state.settings.rfmChannel + 1);
+    renderSettingsRfm();
+  });
+  screen.querySelector("#rfmScan").addEventListener("click", ()=>{
+    renderSettingsRfm();
+  });
+  screen.querySelector(".formBack").addEventListener("click", goBack);
+  screen.querySelector(".formOk").addEventListener("click", goBack);
+}
+
+function renderWeeklyProgram(){
+  const screen = document.getElementById("screen");
+  screen.innerHTML = `
+    <div class="formScreen">
+      <div class="formTitle">WEEKLY PROGRAM</div>
+      <div class="formHint">Placeholder for weekly edit flow.</div>
+      <div class="formFooter">
+        <button class="formOk">OK</button>
+        <button class="formBack">BACK</button>
+      </div>
+    </div>
+  `;
+  screen.querySelector(".formBack").addEventListener("click", goBack);
+  screen.querySelector(".formOk").addEventListener("click", goBack);
+}
+
+function renderWeeklyView(){
+  const screen = document.getElementById("screen");
+  screen.innerHTML = `
+    <div class="formScreen">
+      <div class="formTitle">WEEKLY VIEW</div>
+      <div class="formHint">Placeholder for weekly view.</div>
+      <div class="formFooter">
+        <button class="formOk">OK</button>
+        <button class="formBack">BACK</button>
+      </div>
+    </div>
+  `;
+  screen.querySelector(".formBack").addEventListener("click", goBack);
+  screen.querySelector(".formOk").addEventListener("click", goBack);
+}
+
+function renderWeeklySpeed(){
+  const screen = document.getElementById("screen");
+  screen.innerHTML = `
+    <div class="formScreen">
+      <div class="formTitle">WEEKLY SPEED</div>
+      <div class="formHint">Placeholder for speed selection.</div>
+      <div class="formFooter">
+        <button class="formOk">OK</button>
+        <button class="formBack">BACK</button>
+      </div>
+    </div>
+  `;
+  screen.querySelector(".formBack").addEventListener("click", goBack);
+  screen.querySelector(".formOk").addEventListener("click", goBack);
+}
+
+const screenRenderers = {
+  settings_language: renderSettingsLanguage,
+  settings_screensaver: renderSettingsScreensaver,
+  settings_datetime: renderSettingsDateTime,
+  settings_weekly: renderSettingsWeekly,
+  settings_clima: renderSettingsClima,
+  settings_party: renderSettingsParty,
+  settings_password: renderSettingsPassword,
+  settings_rfm: renderSettingsRfm,
+  weekly_program: renderWeeklyProgram,
+  weekly_view: renderWeeklyView,
+  weekly_speed: renderWeeklySpeed
+};
 
 function getActiveSetBoxItems(){
   return setBoxItems.filter(x => x.active);
@@ -307,7 +696,7 @@ function renderList(){
     it.addEventListener("click", ()=>{
       state.nav.selectedIndex = parseInt(it.getAttribute("data-idx"),10);
       const chosen = kids(current())[state.nav.selectedIndex];
-      if(chosen && !isLeaf(chosen)) enterSelected();
+      if(chosen && (!isLeaf(chosen) || isScreenNode(chosen))) enterSelected();
       else render();
     });
   });
@@ -450,6 +839,11 @@ function render(){
     renderSetBoxInfo();
     return;
   }
+  if(isScreenNode(current()) && screenRenderers[current().id]){
+    screenRenderers[current().id]();
+    updateButtons();
+    return;
+  }
   renderList();
 }
 
@@ -462,7 +856,8 @@ function enterSelected(){
   if(!state.home.unitOn) return;
   const k = kids(current());
   const chosen = k[state.nav.selectedIndex];
-  if(chosen && !isLeaf(chosen)){
+  if(!chosen) return;
+  if(!isLeaf(chosen) || isScreenNode(chosen)){
     state.nav.stack.push(chosen);
     state.nav.selectedIndex = 0;
     render();
