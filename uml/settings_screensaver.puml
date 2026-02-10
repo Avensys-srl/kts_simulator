@@ -1,0 +1,46 @@
+@startuml
+skinparam activity {
+  BackgroundColor #0b1220
+  BorderColor #7ec0ff
+  FontColor #eaf0ff
+}
+
+start
+:Screen = Screensaver Settings;
+:Inputs = {enabled, minutes};
+note right
+  Per l'utente: ON/OFF attiva o disattiva lo screensaver.
+  Se OFF, le frecce non modificano i minuti.
+  Freccia su aumenta i minuti, freccia giu li riduce.
+end note
+
+:Show ON/OFF + minutes + up/down;
+:Selection = ON/OFF | Up | Down | OK | BACK | HOME;
+
+if (ON/OFF) then (yes)
+  :enabled = !enabled;
+endif
+
+if (Up and enabled) then (yes)
+  :minutes = min(minutes + 1, max);
+endif
+
+if (Down and enabled) then (yes)
+  :minutes = max(minutes - 1, min);
+endif
+
+if (OK) then (yes)
+  :Output = {enabled, minutes};
+  :Navigate Back;
+endif
+
+if (BACK) then (yes)
+  :Navigate Back;
+endif
+
+if (HOME) then (yes)
+  :Navigate Home;
+endif
+
+stop
+@enduml

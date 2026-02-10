@@ -1,0 +1,45 @@
+@startuml
+skinparam activity {
+  BackgroundColor #0b1220
+  BorderColor #7ec0ff
+  FontColor #eaf0ff
+}
+
+start
+:Screen = Select Language;
+:Inputs = {currentLanguage, pageIndex};
+note right
+  Per l'utente: scegli la lingua toccando la bandiera.
+  Il riquadro attivo mostra la lingua selezionata.
+  << e >> cambiano pagina di bandiere.
+  OK salva e torna indietro, BACK annulla e torna indietro.
+end note
+
+:Show 6 flags (pageIndex 1/2);
+:Selection = flag | OK | BACK | << | >> | HOME;
+
+if (flag tapped) then (yes)
+  :currentLanguage = selected;
+  :Render selected state;
+endif
+
+if (<< or >>) then (yes)
+  :pageIndex = prev/next;
+  :Render page;
+endif
+
+if (OK) then (yes)
+  :Output = currentLanguage;
+  :Navigate Back;
+endif
+
+if (BACK) then (yes)
+  :Navigate Back;
+endif
+
+if (HOME) then (yes)
+  :Navigate Home;
+endif
+
+stop
+@enduml

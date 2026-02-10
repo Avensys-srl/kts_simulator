@@ -1,0 +1,71 @@
+@startuml
+skinparam activity {
+  BackgroundColor #0b1220
+  BorderColor #7ec0ff
+  FontColor #eaf0ff
+}
+
+start
+:Screen = Clima Settings;
+:Inputs = {preheater, summer, winter, tempSun, tempMoon};
+note right
+  Per l'utente:
+  - I tasti Preheater/Summer/Winter attivano o disattivano le funzioni.
+  - Summer e Winter non possono essere attivi insieme.
+  - Le frecce su/giu aumentano o diminuiscono le temperature target.
+end note
+
+:Show toggles + Sun/Moon panels;
+:Selection = Preheater | Summer | Winter | SunUp/Down | MoonUp/Down | OK | BACK | HOME;
+
+if (Preheater) then (yes)
+  :preheater = !preheater;
+endif
+
+if (Summer) then (yes)
+  :summer = !summer;
+  if (summer) then (yes)
+    :winter = false;
+  endif
+endif
+
+if (Winter) then (yes)
+  :winter = !winter;
+  if (winter) then (yes)
+    :summer = false;
+  endif
+endif
+
+if (SunUp) then (yes)
+  :User action: tap UP to increase Sun temperature;\nValue increases by 1 C within limits (15..32);
+  :tempSun = clamp(tempSun + 1, 15..32);
+endif
+if (SunDown) then (yes)
+  :User action: tap DOWN to decrease Sun temperature;\nValue decreases by 1 C within limits (15..32);
+  :tempSun = clamp(tempSun - 1, 15..32);
+endif
+if (MoonUp) then (yes)
+  :User action: tap UP to increase Moon temperature;\nValue increases by 1 C within limits (15..32);
+  :tempMoon = clamp(tempMoon + 1, 15..32);
+endif
+if (MoonDown) then (yes)
+  :User action: tap DOWN to decrease Moon temperature;\nValue decreases by 1 C within limits (15..32);
+  :tempMoon = clamp(tempMoon - 1, 15..32);
+endif
+
+if (OK) then (yes)
+  :Output = {preheater, summer, winter, tempSun, tempMoon};
+  :User view: changes are confirmed and saved;
+  :Navigate Back;
+endif
+
+if (BACK) then (yes)
+  :Navigate Back;
+endif
+
+if (HOME) then (yes)
+  :Navigate Home;
+endif
+
+stop
+@enduml

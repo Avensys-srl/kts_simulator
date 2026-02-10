@@ -1,0 +1,41 @@
+@startuml
+skinparam activity {
+  BackgroundColor #0b1220
+  BorderColor #7ec0ff
+  FontColor #eaf0ff
+}
+
+start
+:Screen = Settings Menu;
+:Inputs = {pageIndex};
+note right
+  Per l'utente: il menu ha 2 pagine.
+  Le frecce laterali cambiano pagina.
+  Ogni pulsante apre una nuova schermata.
+end note
+
+if (pageIndex = 1) then (yes)
+  :Show buttons:
+  - Language
+  - Screensaver
+  - Date settings
+  - Weekly programmer;
+else (no)
+  :Show buttons:
+  - Clima settings
+  - Party settings
+  - Password settings
+  - Set RFM channel;
+endif
+
+:Selection = one button or arrow;
+
+if (Left/Right arrow) then (yes)
+  :pageIndex = toggle 1/2;
+  :Render page;
+else (button)
+  :Navigate to selected screen;
+endif
+
+stop
+@enduml
