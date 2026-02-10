@@ -15,6 +15,7 @@ const state = {
   },
   settings: {
     language: "EN",
+    languageDraft: null,
     screensaverEnabled: true,
     screensaverMinutes: 10,
     weeklyEnabled: false,
@@ -36,6 +37,22 @@ const state = {
 };
 
 /* --------------------------
+   I18N
+-------------------------- */
+const I18N = window.KTS_I18N || { lang: {} };
+function getLang(){ return state.settings.language || "EN"; }
+function t(id, fallback){
+  const lang = getLang();
+  const langMap = I18N.lang && I18N.lang[lang];
+  const enMap = I18N.lang && I18N.lang.EN;
+  return (langMap && langMap[id]) || (enMap && enMap[id]) || fallback || id || "";
+}
+function nodeLabel(n){
+  if(n && n.textId) return t(n.textId, n.name);
+  return n && n.name ? n.name : "";
+}
+
+/* --------------------------
    Page variables registry
 -------------------------- */
 const pageVars = {
@@ -52,13 +69,13 @@ const pageVars = {
    SET BOX INFO state
 -------------------------- */
 const setBoxItems = [
-  { id: "t_return", label: "T. RETURN", active: true, value: "19 \u00b0C" },
-  { id: "acc_clima", label: "ACC. CLIMA", active: false },
-  { id: "probes", label: "PROBES", active: false, value: "OK" },
-  { id: "t_fresh", label: "T. FRESH", active: true, value: "12 \u00b0C" },
-  { id: "defrost", label: "DEFROST", active: false },
-  { id: "filters", label: "FILTERS", active: false, value: "CLEAN" },
-  { id: "bypass", label: "BYPASS", active: false, value: "AUTO" }
+  { id: "t_return", label: "T. RETURN", textId: "CLTextId_TRETURN", active: true, value: "19 \u00b0C" },
+  { id: "acc_clima", label: "ACC. CLIMA", textId: "CLTextId_BOXINFO_ACCESSORY_CLIMA", active: false },
+  { id: "probes", label: "PROBES", textId: "CLTextId_PROBES", active: false, value: "OK" },
+  { id: "t_fresh", label: "T. FRESH", textId: "CLTextId_TFRESH", active: true, value: "12 \u00b0C" },
+  { id: "defrost", label: "DEFROST", textId: "CLTextId_DEFROST", active: false },
+  { id: "filters", label: "FILTERS", textId: "CLTextId_FILTERS", active: false, value: "CLEAN" },
+  { id: "bypass", label: "BYPASS", textId: "CLTextId_BYPASS", active: false, value: "AUTO" }
 ];
 
 let homeInfoIndex = 0;
@@ -84,13 +101,41 @@ function loadPageVars(){
   }
 }
 
+function saveLanguage(){
+  try{
+    localStorage.setItem("kts.language", state.settings.language);
+  }catch(e){
+    // ignore storage errors
+  }
+}
+
+function loadLanguage(){
+  try{
+    const val = localStorage.getItem("kts.language");
+    if(val) state.settings.language = val;
+  }catch(e){
+    // ignore storage errors
+  }
+}
+
+function applyStaticTranslations(){
+  const btnBack = document.getElementById("btnBack");
+  const btnOk = document.getElementById("btnOk");
+  const btnHome = document.getElementById("btnHome");
+  if(btnBack) btnBack.textContent = t("CLTextId_BACK");
+  if(btnOk) btnOk.textContent = "OK";
+  if(btnHome) btnHome.textContent = "HOME";
+  const searchClear = document.getElementById("searchClear");
+  if(searchClear) searchClear.textContent = "CLEAR";
+}
+
 /* --------------------------
    Helpers
 -------------------------- */
 function current(){ return state.nav.stack[state.nav.stack.length-1]; }
 function kids(n){ return n.children || []; }
 function isLeaf(n){ return !n.children || n.children.length===0; }
-function pathText(){ return state.nav.stack.map(x=>x.name).join(" \u2192 "); }
+function pathText(){ return state.nav.stack.map(x=>nodeLabel(x)).join(" \u2192 "); }
 function clampSel(){
   const k = kids(current());
   if(k.length===0){ state.nav.selectedIndex=0; return; }
@@ -121,19 +166,20 @@ function renderSettingsLanguage(){
   const pageCount = Math.ceil(langs.length / pageSize);
   const page = Math.max(0, Math.min(state.settings.languagePage, pageCount - 1));
   const pageItems = langs.slice(page * pageSize, page * pageSize + pageSize);
+  const selectedLang = state.settings.languageDraft || state.settings.language;
   screen.innerHTML = `
     <div class="formScreen">
-      <div class="formTitle">SELECT LANGUAGE <span class="formPage">${page + 1}/${pageCount}</span></div>
+      <div class="formTitle">${t("CLTextId_SELECT_LANGUAGE")} <span class="formPage">${page + 1}/${pageCount}</span></div>
       <div class="langGrid">
         ${pageItems.map(l => `
-          <div class="langBtn ${state.settings.language===l.id ? "selected" : ""}" data-lang="${l.id}">
+          <div class="langBtn ${selectedLang===l.id ? "selected" : ""}" data-lang="${l.id}">
             <div class="flag ${l.flag}"></div>
           </div>
         `).join("")}
       </div>
       <div class="formFooter">
         <button class="formOk">OK</button>
-        <button class="formBack">BACK</button>
+        <button class="formBack">${t("CLTextId_BACK")}</button>
         <button class="formPrev">&lt;&lt;</button>
         <button class="formNext">&gt;&gt;</button>
         <button class="formHome">HOME</button>
@@ -142,12 +188,24 @@ function renderSettingsLanguage(){
   `;
   screen.querySelectorAll(".langBtn").forEach(btn=>{
     btn.addEventListener("click", ()=>{
-      state.settings.language = btn.getAttribute("data-lang");
+      state.settings.languageDraft = btn.getAttribute("data-lang");
       renderSettingsLanguage();
     });
   });
-  screen.querySelector(".formBack").addEventListener("click", goBack);
-  screen.querySelector(".formOk").addEventListener("click", goBack);
+  screen.querySelector(".formBack").addEventListener("click", ()=>{
+    state.settings.languageDraft = null;
+    goBack();
+  });
+  screen.querySelector(".formOk").addEventListener("click", ()=>{
+    if(state.settings.languageDraft){
+      state.settings.language = state.settings.languageDraft;
+      state.settings.languageDraft = null;
+      saveLanguage();
+      applyStaticTranslations();
+      buildNavTree();
+    }
+    goBack();
+  });
   screen.querySelector(".formPrev").addEventListener("click", ()=>{
     state.settings.languagePage = Math.max(0, page - 1);
     renderSettingsLanguage();
@@ -156,14 +214,17 @@ function renderSettingsLanguage(){
     state.settings.languagePage = Math.min(pageCount - 1, page + 1);
     renderSettingsLanguage();
   });
-  screen.querySelector(".formHome").addEventListener("click", goHome);
+  screen.querySelector(".formHome").addEventListener("click", ()=>{
+    state.settings.languageDraft = null;
+    goHome();
+  });
 }
 
 function renderSettingsScreensaver(){
   const screen = document.getElementById("screen");
   screen.innerHTML = `
     <div class="formScreen">
-      <div class="formTitle">CONFIG SCREEN SAVER</div>
+      <div class="formTitle">${t("CLTextId_CONFIG_SCREEN_SAVER")}</div>
       <div class="ssRow">
         <div class="formBtn ${state.settings.screensaverEnabled ? "on" : "off"}" id="ssToggle">
           ${state.settings.screensaverEnabled ? "ON" : "OFF"}
@@ -178,7 +239,7 @@ function renderSettingsScreensaver(){
       </div>
       <div class="formFooter">
         <button class="formOk">OK</button>
-        <button class="formBack">BACK</button>
+        <button class="formBack">${t("CLTextId_BACK")}</button>
       </div>
     </div>
   `;
@@ -207,20 +268,20 @@ function renderSettingsDateTime(){
   const timeText = now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
   screen.innerHTML = `
     <div class="formScreen">
-      <div class="formTitle">DATE & TIME</div>
+      <div class="formTitle">${t("CLTextId_DATE_SETTINGS")}</div>
       <div class="formRow">
         <div class="formFrame wide">
-          <div class="formLabel">DATE</div>
+          <div class="formLabel">${t("CLTextId_DATE")}</div>
           <div class="formValue">${dateText}</div>
         </div>
         <div class="formFrame wide">
-          <div class="formLabel">TIME</div>
+          <div class="formLabel">${t("CLTextId_TIME")}</div>
           <div class="formValue">${timeText}</div>
         </div>
       </div>
       <div class="formFooter">
         <button class="formOk">OK</button>
-        <button class="formBack">BACK</button>
+        <button class="formBack">${t("CLTextId_BACK")}</button>
       </div>
     </div>
   `;
@@ -232,23 +293,23 @@ function renderSettingsWeekly(){
   const screen = document.getElementById("screen");
   screen.innerHTML = `
     <div class="formScreen">
-      <div class="formTitle">WEEKLY SETTINGS</div>
+      <div class="formTitle">${t("CLTextId_WEEKLY_SETTINGS")}</div>
       <div class="formRow">
         <div class="formBtn ${state.settings.weeklyEnabled ? "on" : "off"}" id="weeklyToggle">
           ${state.settings.weeklyEnabled ? "ON" : "OFF"}
         </div>
         <div class="formCol wide">
-          <div class="formBtn" data-nav="weekly_program">PROGRAM</div>
-          <div class="formBtn" data-nav="weekly_view">VIEW</div>
+          <div class="formBtn" data-nav="weekly_program">${t("CLTextId_PROGRAM")}</div>
+          <div class="formBtn" data-nav="weekly_view">${t("CLTextId_VIEW")}</div>
         </div>
       </div>
       <div class="formRow">
-        <div class="formBtn" data-nav="settings_clima">CLIMA SETTINGS</div>
-        <div class="formBtn" data-nav="weekly_speed">SPEED</div>
+        <div class="formBtn" data-nav="settings_clima">${t("CLTextId_CLIMA_SETTINGS")}</div>
+        <div class="formBtn" data-nav="weekly_speed">${t("CLTextId_SPEED")}</div>
       </div>
       <div class="formFooter">
         <button class="formOk">OK</button>
-        <button class="formBack">BACK</button>
+        <button class="formBack">${t("CLTextId_BACK")}</button>
       </div>
     </div>
   `;
@@ -259,7 +320,13 @@ function renderSettingsWeekly(){
   screen.querySelectorAll("[data-nav]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       const id = btn.getAttribute("data-nav");
-      const node = { name: btn.textContent.trim(), id };
+      const textIdMap = {
+        weekly_program: "CLTextId_WEEKLY_PROGRAMMER",
+        weekly_view: "CLTextId_VIEW",
+        weekly_speed: "CLTextId_SPEED",
+        settings_clima: "CLTextId_CLIMA_SETTINGS"
+      };
+      const node = { name: btn.textContent.trim(), id, textId: textIdMap[id] };
       state.nav.stack.push(node);
       state.nav.selectedIndex = 0;
       render();
@@ -275,16 +342,16 @@ function renderSettingsClima(){
   const moonPct = Math.round(((state.settings.tempMoon - 15) / (32 - 15)) * 100);
   screen.innerHTML = `
     <div class="formScreen">
-      <div class="formTitle">CLIMA SETTINGS</div>
+      <div class="formTitle">${t("CLTextId_CLIMA_SETTINGS")}</div>
       <div class="climaLayout">
         <div class="climaToggleCol">
-          <div class="formBtn ${state.settings.climaPreheater ? "on" : "off"}" id="preheater">PREHEATER</div>
-          <div class="formBtn ${state.settings.climaSummer ? "on" : "off"}" id="summer">SUMMER</div>
-          <div class="formBtn ${state.settings.climaWinter ? "on" : "off"}" id="winter">WINTER</div>
+          <div class="formBtn ${state.settings.climaPreheater ? "on" : "off"}" id="preheater">${t("CLTextId_PREHEATER")}</div>
+          <div class="formBtn ${state.settings.climaSummer ? "on" : "off"}" id="summer">${t("CLTextId_SUMMER")}</div>
+          <div class="formBtn ${state.settings.climaWinter ? "on" : "off"}" id="winter">${t("CLTextId_WINTER")}</div>
         </div>
         <div class="climaPanels">
           <div class="climaFrame">
-            <div class="formLabel">SUN</div>
+            <div class="formLabel">${t("CLTextId_SUN")}</div>
             <div class="climaBar"><div class="climaBarFill" style="height:${sunPct}%"></div></div>
             <div class="climaBtns">
               <div class="formBtn" id="sunUp">▲</div>
@@ -305,7 +372,7 @@ function renderSettingsClima(){
       </div>
       <div class="formFooter">
         <button class="formOk">OK</button>
-        <button class="formBack">BACK</button>
+        <button class="formBack">${t("CLTextId_BACK")}</button>
       </div>
     </div>
   `;
@@ -347,7 +414,7 @@ function renderSettingsParty(){
   const screen = document.getElementById("screen");
   screen.innerHTML = `
     <div class="formScreen">
-      <div class="formTitle">SET PARTY TIMER</div>
+      <div class="formTitle">${t("CLTextId_SET_PARTY_TIMER")}</div>
       <div class="formRow">
         <div class="formBtn ${state.settings.partyEnabled ? "on" : "off"}" id="partyToggle">
           ${state.settings.partyEnabled ? "ON" : "OFF"}
@@ -362,7 +429,7 @@ function renderSettingsParty(){
       </div>
       <div class="formFooter">
         <button class="formOk">OK</button>
-        <button class="formBack">BACK</button>
+        <button class="formBack">${t("CLTextId_BACK")}</button>
       </div>
     </div>
   `;
@@ -388,16 +455,16 @@ function renderSettingsPassword(){
   const screen = document.getElementById("screen");
   screen.innerHTML = `
     <div class="formScreen">
-      <div class="formTitle">PASSWORD</div>
+      <div class="formTitle">${t("CLTextId_PASSWORD_SETTINGS")}</div>
       <div class="formRow">
         <div class="formBtn ${state.settings.passwordEnabled ? "on" : "off"}" id="pwdToggle">
           ${state.settings.passwordEnabled ? "ON" : "OFF"}
         </div>
-        <div class="formBtn wide" id="pwdChange">CHANGE PASSWORD</div>
+        <div class="formBtn wide" id="pwdChange">${t("CLTextId_CHANGE_PASSWORD")}</div>
       </div>
       <div class="formFooter">
         <button class="formOk">OK</button>
-        <button class="formBack">BACK</button>
+        <button class="formBack">${t("CLTextId_BACK")}</button>
       </div>
     </div>
   `;
@@ -418,7 +485,7 @@ function renderSettingsRfm(){
   const channels = Array.from({length: 8}, (_,i)=>i+1);
   screen.innerHTML = `
     <div class="formScreen">
-      <div class="formTitle">RFM CHANGE CHANNEL</div>
+      <div class="formTitle">${t("CLTextId_RFM__CHANGE_CHANNEL")}</div>
       <div class="formRow">
         <div class="formFrame wide">
           ${channels.map(ch => `<div class="formListItem ${state.settings.rfmChannel===ch ? "selected" : ""}">[${String(ch).padStart(2,"0")}] OK</div>`).join("")}
@@ -431,7 +498,7 @@ function renderSettingsRfm(){
       </div>
       <div class="formFooter">
         <button class="formOk">OK</button>
-        <button class="formBack">BACK</button>
+        <button class="formBack">${t("CLTextId_BACK")}</button>
       </div>
     </div>
   `;
@@ -458,10 +525,10 @@ function renderSettingsMenu(){
 
   screen.innerHTML = `
     <div class="formScreen settingsMenu">
-      <div class="formTitle">SETTINGS <span class="formPage">${page + 1}/${pages.length}</span></div>
+      <div class="formTitle">${t("CLTextId_SETTINGS")} <span class="formPage">${page + 1}/${pages.length}</span></div>
       <div class="settingsList">
         ${items.map((c, idx) => `
-          <div class="settingsBtn" data-idx="${idx}">${c.name.toUpperCase()}</div>
+          <div class="settingsBtn" data-idx="${idx}">${nodeLabel(c).toUpperCase()}</div>
         `).join("")}
       </div>
       <div class="settingsArrow prev">&lt;</div>
@@ -497,11 +564,11 @@ function renderWeeklyProgram(){
   const screen = document.getElementById("screen");
   screen.innerHTML = `
     <div class="formScreen">
-      <div class="formTitle">WEEKLY PROGRAM</div>
+      <div class="formTitle">${t("CLTextId_WEEKLY_PROGRAMMER")}</div>
       <div class="formHint">Placeholder for weekly edit flow.</div>
       <div class="formFooter">
         <button class="formOk">OK</button>
-        <button class="formBack">BACK</button>
+        <button class="formBack">${t("CLTextId_BACK")}</button>
       </div>
     </div>
   `;
@@ -513,11 +580,11 @@ function renderWeeklyView(){
   const screen = document.getElementById("screen");
   screen.innerHTML = `
     <div class="formScreen">
-      <div class="formTitle">WEEKLY VIEW</div>
+      <div class="formTitle">${t("CLTextId_VIEW")}</div>
       <div class="formHint">Placeholder for weekly view.</div>
       <div class="formFooter">
         <button class="formOk">OK</button>
-        <button class="formBack">BACK</button>
+        <button class="formBack">${t("CLTextId_BACK")}</button>
       </div>
     </div>
   `;
@@ -529,11 +596,11 @@ function renderWeeklySpeed(){
   const screen = document.getElementById("screen");
   screen.innerHTML = `
     <div class="formScreen">
-      <div class="formTitle">WEEKLY SPEED</div>
+      <div class="formTitle">${t("CLTextId_SPEED")}</div>
       <div class="formHint">Placeholder for speed selection.</div>
       <div class="formFooter">
         <button class="formOk">OK</button>
-        <button class="formBack">BACK</button>
+        <button class="formBack">${t("CLTextId_BACK")}</button>
       </div>
     </div>
   `;
@@ -575,7 +642,7 @@ function startHomeInfoRotation(){
 
   homeInfoIndex = 0;
   const first = items[homeInfoIndex % items.length];
-  state.home.tLabel = first.label;
+  state.home.tLabel = first.textId ? t(first.textId, first.label) : first.label;
   state.home.tValueText = first.value || `${state.home.tValue} \u00b0C`;
   if(current() === HOME) renderHome();
   homeInfoIndex += 1;
@@ -590,7 +657,7 @@ function startHomeInfoRotation(){
       return;
     }
     const next = list[homeInfoIndex % list.length];
-    state.home.tLabel = next.label;
+    state.home.tLabel = next.textId ? t(next.textId, next.label) : next.label;
     state.home.tValueText = next.value || `${state.home.tValue} \u00b0C`;
     homeInfoIndex += 1;
     if(current() === HOME) renderHome();
@@ -677,7 +744,7 @@ function renderHome(){
 
       </div>
 
-      <div class="menuBtn px" id="homeMenu">MENU</div>
+      <div class="menuBtn px" id="homeMenu">${t("CLTextId_MENU")}</div>
 
       <div class="box datetime px">
         <div>${timeText}</div>
@@ -732,14 +799,14 @@ function renderList(){
   const count = document.getElementById("count");
   const sel = document.getElementById("sel");
 
-  where.textContent = current().name;
+  where.textContent = nodeLabel(current());
   path.textContent = pathText();
 
   const k = kids(current());
   clampSel();
 
   count.textContent = `${k.length} item(s)`;
-  sel.textContent = `Selected: ${k[state.nav.selectedIndex] ? k[state.nav.selectedIndex].name : "\u2014"}`;
+  sel.textContent = `Selected: ${k[state.nav.selectedIndex] ? nodeLabel(k[state.nav.selectedIndex]) : "\u2014"}`;
 
   if(k.length===0){
     screen.innerHTML = `
@@ -765,7 +832,7 @@ function renderList(){
     html += `
       <div class="item" data-idx="${idx}">
         <div>
-          <div class="label">${c.name}</div>
+          <div class="label">${nodeLabel(c)}</div>
           <div class="hint">${hint}</div>
         </div>
         <div class="right">
@@ -798,12 +865,12 @@ function renderMenu(){
   const where = document.getElementById("where");
   const path = document.getElementById("path");
 
-  where.textContent = current().name;
+  where.textContent = nodeLabel(current());
   path.textContent = pathText();
 
   const k = kids(current());
   const tiles = k.map((c, idx) => (
-    `<div class="menuTile" data-idx="${idx}">${c.name}</div>`
+    `<div class="menuTile" data-idx="${idx}">${nodeLabel(c)}</div>`
   )).join("");
 
   screen.innerHTML = `
@@ -843,7 +910,7 @@ function renderSetBoxInfo(){
   const where = document.getElementById("where");
   const path = document.getElementById("path");
 
-  where.textContent = current().name;
+  where.textContent = nodeLabel(current());
   path.textContent = pathText();
 
   if(pageVars.set_box_info && Array.isArray(pageVars.set_box_info.selectedIds)){
@@ -854,18 +921,19 @@ function renderSetBoxInfo(){
 
   const tiles = setBoxItems.map((item) => {
     const activeClass = item.active ? " green" : "";
-    return `<div class="setBoxBtn${activeClass}" data-id="${item.id}">${item.label}</div>`;
+    const label = item.textId ? t(item.textId, item.label) : item.label;
+    return `<div class="setBoxBtn${activeClass}" data-id="${item.id}">${label}</div>`;
   }).join("");
 
   screen.innerHTML = `
     <div class="setBoxScreen">
-      <div class="setBoxTitle">SET BOX INFO</div>
+      <div class="setBoxTitle">${t("CLTextId_CONFIG_BOX_INFO")}</div>
       <div class="setBoxGrid">
         ${tiles}
       </div>
       <div class="setBoxBottom">
         <div class="setBoxBtn ok">OK</div>
-        <div class="setBoxBtn back">BACK</div>
+        <div class="setBoxBtn back">${t("CLTextId_BACK")}</div>
         <div class="spacer"></div>
         <div class="homeFab" id="setBoxHome" title="Home">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -905,7 +973,7 @@ function render(){
   const where = document.getElementById("where");
   const path = document.getElementById("path");
 
-  where.textContent = current().name;
+  where.textContent = nodeLabel(current());
   path.textContent = pathText();
 
   if(current() === HOME){
@@ -1048,7 +1116,7 @@ function buildNavTree(){
     const newPath = [...pathNodes, n];
     const pathId = `p${idCounter++}`;
     navPathMap.set(pathId, newPath);
-    const label = `<span class="navLabel" data-path="${pathId}">${n.name}</span>`;
+    const label = `<span class="navLabel" data-path="${pathId}">${nodeLabel(n)}</span>`;
     const children = kids(n);
     if(children.length > 0){
       const openAttr = n === HOME ? " open" : "";
@@ -1159,7 +1227,9 @@ searchClear.addEventListener("click", ()=>{
 
 /* Init */
 loadPageVars();
+loadLanguage();
 buildIndex();
 buildNavTree();
+applyStaticTranslations();
 render();
 
