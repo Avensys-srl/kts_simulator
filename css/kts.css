@@ -322,6 +322,12 @@ h2{
   color:#d7e6ff;
   text-transform:uppercase;
 }
+.formPage{
+  float:right;
+  font-size:12px;
+  letter-spacing:2px;
+  color:var(--muted);
+}
 .formRow{
   display:flex;
   gap:12px;
@@ -394,6 +400,101 @@ h2{
   min-width:90px;
   font-size:12px;
 }
+.settingsMenu{
+  position:relative;
+}
+.settingsList{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-top:6px;
+}
+.settingsBtn{
+  height:44px;
+  border:2px solid #7ec0ff;
+  background: linear-gradient(180deg, #1b63d1, #0f3f9a);
+  color:var(--white);
+  font-weight:900;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:6px;
+  cursor:pointer;
+}
+.settingsArrows{
+  position:absolute;
+  top:90px;
+  right:14px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.settingsArrow{
+  width:36px;
+  height:36px;
+  border:2px solid #7ec0ff;
+  border-radius:6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  color:var(--white);
+  background:rgba(0,0,0,.2);
+  cursor:pointer;
+}
+.settingsHome{
+  position:absolute;
+  right:16px;
+  bottom:16px;
+  width:54px;
+  height:54px;
+  border-radius:50%;
+  border:2px solid #7ec0ff;
+  background: linear-gradient(180deg, #2f8dff, #1d5fcc);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:1px;
+  cursor:pointer;
+}
+
+.flag{
+  width:48px;
+  height:32px;
+  border:2px solid #eaf0ff;
+  box-shadow:0 0 0 1px rgba(0,0,0,.4) inset;
+}
+.flag.uk{
+  background:
+    linear-gradient(90deg, transparent 42%, #fff 42% 58%, transparent 58%),
+    linear-gradient(0deg, transparent 42%, #fff 42% 58%, transparent 58%),
+    linear-gradient(45deg, #c00 0 10%, transparent 10% 90%, #c00 90%),
+    linear-gradient(-45deg, #c00 0 10%, transparent 10% 90%, #c00 90%),
+    #0a3d8f;
+}
+.flag.it{ background: linear-gradient(90deg, #009246 0 33%, #fff 33% 66%, #ce2b37 66%); }
+.flag.de{ background: linear-gradient(180deg, #000 0 33%, #dd0000 33% 66%, #ffce00 66%); }
+.flag.nl{ background: linear-gradient(0deg, #ae1c28 0 33%, #fff 33% 66%, #21468b 66%); }
+.flag.fr{ background: linear-gradient(90deg, #0055a4 0 33%, #fff 33% 66%, #ef4135 66%); }
+.flag.pl{ background: linear-gradient(0deg, #fff 0 50%, #dc143c 50%); }
+.flag.dk{
+  background:
+    linear-gradient(90deg, transparent 32%, #fff 32% 40%, transparent 40%),
+    linear-gradient(0deg, transparent 45%, #fff 45% 55%, transparent 55%),
+    #c60c30;
+}
+.flag.ro{ background: linear-gradient(90deg, #002b7f 0 33%, #fcd116 33% 66%, #ce1126 66%); }
+.flag.bg{ background: linear-gradient(180deg, #fff 0 33%, #00966e 33% 66%, #d62612 66%); }
+.flag.hu{ background: linear-gradient(180deg, #ce2939 0 33%, #fff 33% 66%, #477050 66%); }
+.flag.sl{
+  background:
+    linear-gradient(180deg, #fff 0 33%, #005ce6 33% 66%, #d50000 66%);
+}
+.flag.pt{ background: linear-gradient(90deg, #046a38 0 40%, #da291c 40%); }
 .formHint{
   color:var(--muted);
   font-size:12px;
@@ -402,6 +503,97 @@ h2{
   display:grid;
   grid-template-columns: repeat(3, 1fr);
   gap:10px;
+}
+.langGrid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:12px;
+}
+.langBtn{
+  height:64px;
+  border:2px solid #7ec0ff;
+  background: linear-gradient(180deg, #1b63d1, #0f3f9a);
+  color:var(--white);
+  font-weight:900;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:6px;
+  cursor:pointer;
+}
+.langBtn.selected{
+  background: linear-gradient(180deg, #1c9b70, #0c6a4f);
+  border-color:#7ff1c6;
+}
+.ssRow{
+  display:grid;
+  grid-template-columns: 80px 1fr 80px;
+  gap:12px;
+  align-items:center;
+}
+.ssFrame{
+  border:2px solid rgba(126,192,255,.7);
+  background:rgba(0,0,0,.18);
+  height:90px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  font-weight:900;
+}
+.ssCol{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.climaLayout{
+  display:grid;
+  grid-template-columns: 120px 1fr;
+  gap:14px;
+}
+.climaToggleCol{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.climaPanels{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:12px;
+}
+.climaFrame{
+  border:2px solid rgba(126,192,255,.7);
+  background:rgba(0,0,0,.18);
+  padding:10px;
+  display:grid;
+  grid-template-rows: auto 1fr auto;
+  gap:8px;
+  min-height:150px;
+}
+.climaBar{
+  position:relative;
+  width:36px;
+  height:90px;
+  border:2px solid rgba(126,192,255,.7);
+  background:rgba(0,0,0,.25);
+}
+.climaBarFill{
+  position:absolute;
+  bottom:0;
+  left:0;
+  width:100%;
+  background:#39e36a;
+}
+.climaTemp{
+  font-weight:900;
+  font-size:16px;
+}
+.climaBtns{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
 }
 .formListItem{
   font-size:12px;

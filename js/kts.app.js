@@ -26,7 +26,9 @@ const state = {
     climaSummer: true,
     climaWinter: false,
     tempSun: 22,
-    tempMoon: 18
+    tempMoon: 18,
+    menuPage: 0,
+    languagePage: 0
   },
   timers: {
     homeInfoTimer: null
@@ -101,20 +103,44 @@ function isScreenNode(n){
 
 function renderSettingsLanguage(){
   const screen = document.getElementById("screen");
-  const langs = ["EN", "FR", "DE", "IT", "NL", "PL"];
+  const langs = [
+    { id: "EN", flag: "uk" },
+    { id: "IT", flag: "it" },
+    { id: "DE", flag: "de" },
+    { id: "NL", flag: "nl" },
+    { id: "FR", flag: "fr" },
+    { id: "PL", flag: "pl" },
+    { id: "DK", flag: "dk" },
+    { id: "RO", flag: "ro" },
+    { id: "BG", flag: "bg" },
+    { id: "HU", flag: "hu" },
+    { id: "SL", flag: "sl" },
+    { id: "PT", flag: "pt" }
+  ];
+  const pageSize = 6;
+  const pageCount = Math.ceil(langs.length / pageSize);
+  const page = Math.max(0, Math.min(state.settings.languagePage, pageCount - 1));
+  const pageItems = langs.slice(page * pageSize, page * pageSize + pageSize);
   screen.innerHTML = `
     <div class="formScreen">
-      <div class="formTitle">SELECT LANGUAGE</div>
-      <div class="formGrid">
-        ${langs.map(l => `<div class="formBtn ${state.settings.language===l ? "selected" : ""}" data-lang="${l}">${l}</div>`).join("")}
+      <div class="formTitle">SELECT LANGUAGE <span class="formPage">${page + 1}/${pageCount}</span></div>
+      <div class="langGrid">
+        ${pageItems.map(l => `
+          <div class="langBtn ${state.settings.language===l.id ? "selected" : ""}" data-lang="${l.id}">
+            <div class="flag ${l.flag}"></div>
+          </div>
+        `).join("")}
       </div>
       <div class="formFooter">
         <button class="formOk">OK</button>
         <button class="formBack">BACK</button>
+        <button class="formPrev">&lt;&lt;</button>
+        <button class="formNext">&gt;&gt;</button>
+        <button class="formHome">HOME</button>
       </div>
     </div>
   `;
-  screen.querySelectorAll(".formBtn").forEach(btn=>{
+  screen.querySelectorAll(".langBtn").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       state.settings.language = btn.getAttribute("data-lang");
       renderSettingsLanguage();
@@ -122,6 +148,15 @@ function renderSettingsLanguage(){
   });
   screen.querySelector(".formBack").addEventListener("click", goBack);
   screen.querySelector(".formOk").addEventListener("click", goBack);
+  screen.querySelector(".formPrev").addEventListener("click", ()=>{
+    state.settings.languagePage = Math.max(0, page - 1);
+    renderSettingsLanguage();
+  });
+  screen.querySelector(".formNext").addEventListener("click", ()=>{
+    state.settings.languagePage = Math.min(pageCount - 1, page + 1);
+    renderSettingsLanguage();
+  });
+  screen.querySelector(".formHome").addEventListener("click", goHome);
 }
 
 function renderSettingsScreensaver(){
@@ -129,14 +164,14 @@ function renderSettingsScreensaver(){
   screen.innerHTML = `
     <div class="formScreen">
       <div class="formTitle">CONFIG SCREEN SAVER</div>
-      <div class="formRow">
+      <div class="ssRow">
         <div class="formBtn ${state.settings.screensaverEnabled ? "on" : "off"}" id="ssToggle">
           ${state.settings.screensaverEnabled ? "ON" : "OFF"}
         </div>
-        <div class="formFrame">
-          <div class="formValue">${state.settings.screensaverMinutes} min</div>
+        <div class="ssFrame">
+          ${state.settings.screensaverMinutes} min
         </div>
-        <div class="formCol">
+        <div class="ssCol">
           <div class="formBtn" id="ssUp">▲</div>
           <div class="formBtn" id="ssDn">▼</div>
         </div>
@@ -236,27 +271,35 @@ function renderSettingsWeekly(){
 
 function renderSettingsClima(){
   const screen = document.getElementById("screen");
+  const sunPct = Math.round(((state.settings.tempSun - 15) / (32 - 15)) * 100);
+  const moonPct = Math.round(((state.settings.tempMoon - 15) / (32 - 15)) * 100);
   screen.innerHTML = `
     <div class="formScreen">
       <div class="formTitle">CLIMA SETTINGS</div>
-      <div class="formRow">
-        <div class="formCol">
+      <div class="climaLayout">
+        <div class="climaToggleCol">
           <div class="formBtn ${state.settings.climaPreheater ? "on" : "off"}" id="preheater">PREHEATER</div>
           <div class="formBtn ${state.settings.climaSummer ? "on" : "off"}" id="summer">SUMMER</div>
           <div class="formBtn ${state.settings.climaWinter ? "on" : "off"}" id="winter">WINTER</div>
         </div>
-        <div class="formCol wide">
-          <div class="formFrame">
+        <div class="climaPanels">
+          <div class="climaFrame">
             <div class="formLabel">SUN</div>
-            <div class="formValue">${state.settings.tempSun} °C</div>
-            <div class="formBtn" id="sunUp">▲</div>
-            <div class="formBtn" id="sunDn">▼</div>
+            <div class="climaBar"><div class="climaBarFill" style="height:${sunPct}%"></div></div>
+            <div class="climaBtns">
+              <div class="formBtn" id="sunUp">▲</div>
+              <div class="formBtn" id="sunDn">▼</div>
+              <div class="climaTemp">${state.settings.tempSun} °C</div>
+            </div>
           </div>
-          <div class="formFrame">
+          <div class="climaFrame">
             <div class="formLabel">MOON</div>
-            <div class="formValue">${state.settings.tempMoon} °C</div>
-            <div class="formBtn" id="moonUp">▲</div>
-            <div class="formBtn" id="moonDn">▼</div>
+            <div class="climaBar"><div class="climaBarFill" style="height:${moonPct}%"></div></div>
+            <div class="climaBtns">
+              <div class="formBtn" id="moonUp">▲</div>
+              <div class="formBtn" id="moonDn">▼</div>
+              <div class="climaTemp">${state.settings.tempMoon} °C</div>
+            </div>
           </div>
         </div>
       </div>
@@ -405,6 +448,51 @@ function renderSettingsRfm(){
   });
   screen.querySelector(".formBack").addEventListener("click", goBack);
   screen.querySelector(".formOk").addEventListener("click", goBack);
+}
+
+function renderSettingsMenu(){
+  const screen = document.getElementById("screen");
+  const pages = [SettingsP1, SettingsP2];
+  const page = Math.max(0, Math.min(state.settings.menuPage, pages.length - 1));
+  const items = (pages[page].children || []).slice(0, 4);
+
+  screen.innerHTML = `
+    <div class="formScreen settingsMenu">
+      <div class="formTitle">SETTINGS <span class="formPage">${page + 1}/${pages.length}</span></div>
+      <div class="settingsList">
+        ${items.map((c, idx) => `
+          <div class="settingsBtn" data-idx="${idx}">${c.name.toUpperCase()}</div>
+        `).join("")}
+      </div>
+      <div class="settingsArrows">
+        <div class="settingsArrow prev">&lt;</div>
+        <div class="settingsArrow next">&gt;</div>
+      </div>
+      <div class="settingsHome">HOME</div>
+    </div>
+  `;
+
+  screen.querySelectorAll(".settingsBtn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const idx = parseInt(btn.getAttribute("data-idx"),10);
+      const chosen = items[idx];
+      if(chosen){
+        state.nav.stack.push(chosen);
+        state.nav.selectedIndex = 0;
+        render();
+      }
+    });
+  });
+
+  screen.querySelector(".settingsArrow.prev").addEventListener("click", ()=>{
+    state.settings.menuPage = Math.max(0, page - 1);
+    renderSettingsMenu();
+  });
+  screen.querySelector(".settingsArrow.next").addEventListener("click", ()=>{
+    state.settings.menuPage = Math.min(pages.length - 1, page + 1);
+    renderSettingsMenu();
+  });
+  screen.querySelector(".settingsHome").addEventListener("click", goHome);
 }
 
 function renderWeeklyProgram(){
@@ -833,6 +921,11 @@ function render(){
   }
   if(current() === MENU){
     renderMenu();
+    return;
+  }
+  if(current() === Settings){
+    renderSettingsMenu();
+    updateButtons();
     return;
   }
   if(current() === SET_BOX_INFO){
