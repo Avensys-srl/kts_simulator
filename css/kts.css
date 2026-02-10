@@ -31,9 +31,15 @@ h2{
 }
 
 /* ===== SEARCH PANEL (outside KTS) ===== */
-.searchPanel{
+.topPanels{
   max-width:980px;
   margin:0 auto 14px auto;
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+}
+.searchPanel{
+  flex:1;
   display:flex;
   gap:12px;
   align-items:flex-start;
@@ -305,6 +311,70 @@ h2{
   flex:1;
 }
 
+.mainRow{
+  max-width:980px;
+  margin:0 auto;
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+}
+.mainRow .kts{
+  flex:0 0 560px;
+}
+.navPanel{
+  flex:1;
+  background:rgba(0,0,0,.18);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  padding:12px;
+  box-shadow:0 10px 40px rgba(0,0,0,.25);
+  max-height:620px;
+  overflow:auto;
+}
+.navHeader{
+  font-weight:900;
+  letter-spacing:1px;
+  margin-bottom:8px;
+  color:var(--muted);
+}
+.navTree{
+  font-size:12px;
+}
+.navGroup{
+  border-left:1px solid rgba(255,255,255,.08);
+  margin:6px 0 6px 6px;
+  padding-left:8px;
+}
+.navGroup > summary{
+  cursor:pointer;
+  list-style:none;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.navGroup > summary::-webkit-details-marker{display:none;}
+.navCaret{
+  display:inline-block;
+  width:10px;
+  color:var(--muted);
+  transform:rotate(0deg);
+  transition:transform .15s ease;
+}
+.navGroup[open] > summary .navCaret{transform:rotate(90deg);}
+.navLabel{
+  font-weight:700;
+  cursor:pointer;
+}
+.navLabel:hover{color:var(--white);}
+.navLeaf{
+  margin:6px 0 6px 14px;
+}
+.navChildren{
+  margin-left:10px;
+  padding-left:6px;
+  border-left:1px dashed rgba(255,255,255,.08);
+}
+
 .formScreen{
   min-height:402px;
   border:2px solid var(--blue1);
@@ -408,6 +478,9 @@ h2{
   flex-direction:column;
   gap:10px;
   margin-top:6px;
+  width:78%;
+  margin-left:auto;
+  margin-right:auto;
 }
 .settingsBtn{
   height:44px;
@@ -423,15 +496,10 @@ h2{
   border-radius:6px;
   cursor:pointer;
 }
-.settingsArrows{
-  position:absolute;
-  top:90px;
-  right:14px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
 .settingsArrow{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
   width:36px;
   height:36px;
   border:2px solid #7ec0ff;
@@ -444,6 +512,8 @@ h2{
   background:rgba(0,0,0,.2);
   cursor:pointer;
 }
+.settingsArrow.prev{ left:16px; }
+.settingsArrow.next{ right:16px; }
 .settingsHome{
   position:absolute;
   right:16px;

@@ -12,44 +12,54 @@
   <h2>KTS &mdash; Simulator</h2>
 
   <!-- SEARCH OUTSIDE KTS -->
-  <div class="searchPanel">
-    <div class="searchBox">
-      <div class="searchRow">
-        <input id="searchInput" type="text" placeholder="Cerca schermata... es: Probes settings, Climate settings, Fire alarm..." />
-        <button id="searchClear">CLEAR</button>
-      </div>
-      <div class="searchHint">
-        - Scrivi 2+ caratteri per vedere i risultati.<br/>
-        - Clicca un risultato per aprire direttamente la schermata e vedere il percorso completo.<br/>
-        - Se l&apos;unit&agrave; &egrave; OFF (blackout), la navigazione viene bloccata: riaccendi con il tasto power.
-      </div>
+  <div class="topPanels">
+    <div class="searchPanel">
+      <div class="searchBox">
+        <div class="searchRow">
+          <input id="searchInput" type="text" placeholder="Cerca schermata... es: Probes settings, Climate settings, Fire alarm..." />
+          <button id="searchClear">CLEAR</button>
+        </div>
+        <div class="searchHint">
+          - Scrivi 2+ caratteri per vedere i risultati.<br/>
+          - Clicca un risultato per aprire direttamente la schermata e vedere il percorso completo.<br/>
+          - Se l&apos;unit&agrave; &egrave; OFF (blackout), la navigazione viene bloccata: riaccendi con il tasto power.
+        </div>
 
-      <div class="results" id="results"></div>
-    </div>
-  </div>
-
-  <div class="kts" id="ktsRoot" role="application" aria-label="KTS Simulator">
-    <div class="topbar">
-      <div class="where" id="where">HOME</div>
-      <div class="path" id="path">HOME</div>
-    </div>
-
-    <div class="screen" id="screen"></div>
-
-    <div class="footer">
-      <div class="btnrow">
-        <button id="btnHome">HOME</button>
-        <button id="btnBack" class="secondary">BACK</button>
-        <button id="btnPrev" class="secondary">&lt;&lt;</button>
-        <button id="btnNext" class="secondary">&gt;&gt;</button>
-        <button id="btnOk">OK</button>
-      </div>
-      <div class="status">
-        <span class="badge" id="count">&mdash;</span>
-        <span class="badge" id="sel">Selected: &mdash;</span>
+        <div class="results" id="results"></div>
       </div>
     </div>
   </div>
+
+  <div class="mainRow">
+    <div class="kts" id="ktsRoot" role="application" aria-label="KTS Simulator">
+      <div class="topbar">
+        <div class="where" id="where">HOME</div>
+        <div class="path" id="path">HOME</div>
+      </div>
+
+      <div class="screen" id="screen"></div>
+
+      <div class="footer">
+        <div class="btnrow">
+          <button id="btnHome">HOME</button>
+          <button id="btnBack" class="secondary">BACK</button>
+          <button id="btnPrev" class="secondary">&lt;&lt;</button>
+          <button id="btnNext" class="secondary">&gt;&gt;</button>
+          <button id="btnOk">OK</button>
+        </div>
+        <div class="status">
+          <span class="badge" id="count">&mdash;</span>
+          <span class="badge" id="sel">Selected: &mdash;</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="navPanel">
+      <div class="navHeader">Navigation</div>
+      <div class="navTree" id="navTree"></div>
+    </div>
+  </div>
+
 </div>
 
 <script src="data/kts.data.js" defer></script>

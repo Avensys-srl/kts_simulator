@@ -464,10 +464,8 @@ function renderSettingsMenu(){
           <div class="settingsBtn" data-idx="${idx}">${c.name.toUpperCase()}</div>
         `).join("")}
       </div>
-      <div class="settingsArrows">
-        <div class="settingsArrow prev">&lt;</div>
-        <div class="settingsArrow next">&gt;</div>
-      </div>
+      <div class="settingsArrow prev">&lt;</div>
+      <div class="settingsArrow next">&gt;</div>
       <div class="settingsHome">HOME</div>
     </div>
   `;
@@ -1019,6 +1017,7 @@ document.getElementById("btnNext").addEventListener("click", ()=>pageStep(+1));
    SEARCH INDEX
 -------------------------- */
 let index = []; // { label, node, pathNodes, pathText, depth }
+let navPathMap = new Map();
 
 function buildIndex(){
   index = [];
@@ -1038,6 +1037,45 @@ function buildIndex(){
     (n.children || []).forEach(ch => walk(ch, newPath));
   }
   walk(root, []);
+}
+
+function buildNavTree(){
+  const root = HOME;
+  let idCounter = 0;
+  navPathMap = new Map();
+
+  function nodeHtml(n, pathNodes){
+    const newPath = [...pathNodes, n];
+    const pathId = `p${idCounter++}`;
+    navPathMap.set(pathId, newPath);
+    const label = `<span class="navLabel" data-path="${pathId}">${n.name}</span>`;
+    const children = kids(n);
+    if(children.length > 0){
+      const openAttr = n === HOME ? " open" : "";
+      return `
+        <details class="navGroup"${openAttr}>
+          <summary><span class="navCaret">\u25B8</span>${label}</summary>
+          <div class="navChildren">
+            ${children.map(ch => nodeHtml(ch, newPath)).join("")}
+          </div>
+        </details>
+      `;
+    }
+    return `<div class="navLeaf">${label}</div>`;
+  }
+
+  const treeEl = document.getElementById("navTree");
+  if(!treeEl) return;
+  treeEl.innerHTML = nodeHtml(root, []);
+  treeEl.querySelectorAll("details.navGroup").forEach(d => { d.open = true; });
+  treeEl.querySelectorAll(".navLabel").forEach(labelEl=>{
+    labelEl.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const id = labelEl.getAttribute("data-path");
+      const pathNodes = navPathMap.get(id);
+      if(pathNodes) goToPath(pathNodes);
+    });
+  });
 }
 
 function normalize(s){
@@ -1122,5 +1160,6 @@ searchClear.addEventListener("click", ()=>{
 /* Init */
 loadPageVars();
 buildIndex();
+buildNavTree();
 render();
 

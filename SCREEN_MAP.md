@@ -1,0 +1,117 @@
+# KTS Simulator - Mappa Schermate (da HOME)
+
+Questa mappa descrive tutte le schermate e le relazioni a partire dalla Home Page.
+Le voci annidate rappresentano i livelli di navigazione.
+
+HOME
+- MENU
+  - Settings
+    - Settings (Page 1/2)
+      - Language settings
+      - Screensaver
+      - Date and time settings
+      - Weekly settings
+        - ON / OFF
+        - Program
+        - View
+        - Clima settings
+        - Speed
+    - Settings (Page 2/2)
+      - Climate settings
+      - Party settings
+      - Password settings
+      - Set RFM channel
+  - Service (password required)
+    - Page 1/6
+      - Disconnect accessories
+      - Ventilation control
+        - CAF
+        - FSC
+        - CAP
+        - CAP calibration procedure
+      - Airflow settings
+        - Three speeds
+        - Stepless (speed)
+      - Input settings
+        - Page 1/3
+          - Enable / Disable
+          - Regulation air flow (0-10 V)
+          - Input channel (INPUT 1 / INPUT 2)
+        - Page 2/3
+          - Enable / Disable
+          - Season toggle (Summer / Winter)
+            - 0 V = winter
+            - 10 V = summer
+          - Target UNIT (fan)
+          - Target BPD (bypass damper)
+        - Page 3/3
+          - Enable / Disable
+          - Fire alarm behavior
+            - Stop extract + stop supply
+            - Start extract + stop supply
+            - Stop extract + start supply
+            - Start extract + start supply
+    - Page 2/6
+      - Output settings
+      - BPD settings
+      - Unbalanced airflow
+      - Filter settings
+    - Page 3/6
+      - RH settings
+      - CO2 settings
+      - VOC settings
+      - Temperature hysteresis
+    - Page 4/6
+      - Report data (admin)
+      - Upgrade
+      - Change password
+      - Probes settings
+        - Temperature probe settings
+          - Return
+          - Supply
+    - Page 5/6
+      - Modbus settings
+      - Test unit
+      - EEPROM reset
+      - Reference temperature settings
+    - Page 6/6
+      - DSC update delay
+      - PIR settings
+      - Clean event settings
+  - Info
+    - Page 1/3
+      - Device ID
+      - Serial ID
+      - Firmware version
+      - Software version
+      - Hardware version
+      - Unit type
+      - KTS type (Basic / Extra)
+      - Counter
+      - Probes
+    - Page 2/3
+      - QR code (unit summary)
+    - Page 3/3
+      - Accessories list
+        - HWD
+        - MBUS
+        - BPD
+        - CWD
+        - DPP V2
+        - INP
+        - OUT
+        - EPBD
+        - CAPS
+        - CAPR
+- SET BOX INFO
+  - T. RETURN
+  - ACC. CLIMA
+  - PROBES
+  - T. FRESH
+  - DEFROST
+  - FILTERS
+  - BYPASS
+
+Note:
+- Le schermate con paginazione sono indicate come Page X/Y.
+- Nel simulatore alcune schermate sono placeholder (contenuto base) ma la navigazione segue il flusso corretto.
