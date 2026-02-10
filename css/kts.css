@@ -366,6 +366,19 @@ h2{
   cursor:pointer;
 }
 .navLabel:hover{color:var(--white);}
+.navDoc{
+  margin-left:6px;
+  font-size:10px;
+  padding:2px 6px;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:999px;
+  color:var(--muted);
+  text-decoration:none;
+}
+.navDoc:hover{
+  color:var(--white);
+  border-color:rgba(255,255,255,.35);
+}
 .navLeaf{
   margin:6px 0 6px 14px;
 }

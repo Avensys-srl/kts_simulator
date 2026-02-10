@@ -52,6 +52,102 @@ function nodeLabel(n){
   return n && n.name ? n.name : "";
 }
 
+const DOC_MAP = {
+  HOME: "screens_md/home.md",
+  MENU: "screens_md/menu.md",
+  Settings: "screens_md/settings_menu.md",
+  SET_BOX_INFO: "screens_md/set_box_info.md",
+
+  settings_language: "screens_md/settings_language.md",
+  settings_screensaver: "screens_md/settings_screensaver.md",
+  settings_datetime: "screens_md/settings_datetime.md",
+  settings_weekly: "screens_md/settings_weekly.md",
+  settings_clima: "screens_md/settings_clima.md",
+  settings_party: "screens_md/settings_party.md",
+  settings_password: "screens_md/settings_password.md",
+  settings_rfm: "screens_md/settings_rfm.md",
+
+  weekly_program: "screens_md/weekly_program.md",
+  weekly_view: "screens_md/weekly_view.md",
+  weekly_speed: "screens_md/weekly_speed.md",
+
+  service_page_1: "screens_md/service_page_1.md",
+  service_page_2: "screens_md/service_page_2.md",
+  service_page_3: "screens_md/service_page_3.md",
+  service_page_4: "screens_md/service_page_4.md",
+  service_page_5: "screens_md/service_page_5.md",
+  service_page_6: "screens_md/service_page_6.md",
+
+  disconnect_accessories: "screens_md/disconnect_accessories.md",
+  ventilation_control: "screens_md/ventilation_control.md",
+  airflow_settings: "screens_md/airflow_settings.md",
+  input_settings_page1: "screens_md/input_settings_page1.md",
+  input_settings_page2: "screens_md/input_settings_page2.md",
+  input_settings_page3: "screens_md/input_settings_page3.md",
+  output_settings: "screens_md/output_settings.md",
+  bpd_settings: "screens_md/bpd_settings.md",
+  unbalanced_airflow: "screens_md/unbalanced_airflow.md",
+  filter_settings: "screens_md/filter_settings.md",
+  rh_settings: "screens_md/rh_settings.md",
+  co2_settings: "screens_md/co2_settings.md",
+  voc_settings: "screens_md/voc_settings.md",
+  temperature_hysteresis: "screens_md/temperature_hysteresis.md",
+  report_data_admin: "screens_md/report_data_admin.md",
+  upgrade: "screens_md/upgrade.md",
+  change_password: "screens_md/change_password.md",
+  probes_settings: "screens_md/probes_settings.md",
+  modbus_settings: "screens_md/modbus_settings.md",
+  test_unit: "screens_md/test_unit.md",
+  eeprom_reset: "screens_md/eeprom_reset.md",
+  reference_temperature_settings: "screens_md/reference_temperature_settings.md",
+  dsc_update_delay: "screens_md/dsc_update_delay.md",
+  pir_settings: "screens_md/pir_settings.md",
+  clean_event_settings: "screens_md/clean_event_settings.md",
+
+  info_page_1: "screens_md/info_page_1.md",
+  info_page_2: "screens_md/info_page_2.md",
+  info_page_3: "screens_md/info_page_3.md"
+};
+
+const NAME_DOC_MAP = {
+  "Disconnect accessories": "screens_md/disconnect_accessories.md",
+  "Ventilation control": "screens_md/ventilation_control.md",
+  "Airflow settings": "screens_md/airflow_settings.md",
+  "Input settings": "screens_md/input_settings_page1.md",
+  "Output settings": "screens_md/output_settings.md",
+  "BPD settings": "screens_md/bpd_settings.md",
+  "Unbalanced airflow": "screens_md/unbalanced_airflow.md",
+  "Filter settings": "screens_md/filter_settings.md",
+  "RH settings": "screens_md/rh_settings.md",
+  "CO2 settings": "screens_md/co2_settings.md",
+  "VOC settings": "screens_md/voc_settings.md",
+  "Temperature hysteresis": "screens_md/temperature_hysteresis.md",
+  "Report data (admin)": "screens_md/report_data_admin.md",
+  "Upgrade": "screens_md/upgrade.md",
+  "Change password": "screens_md/change_password.md",
+  "Probes settings": "screens_md/probes_settings.md",
+  "Modbus settings": "screens_md/modbus_settings.md",
+  "Test unit": "screens_md/test_unit.md",
+  "EEPROM reset": "screens_md/eeprom_reset.md",
+  "Reference temperature settings": "screens_md/reference_temperature_settings.md",
+  "DSC update delay": "screens_md/dsc_update_delay.md",
+  "PIR settings": "screens_md/pir_settings.md",
+  "Clean event settings": "screens_md/clean_event_settings.md"
+};
+
+function docPathForNode(n){
+  if(!n) return null;
+  if(n === HOME) return DOC_MAP.HOME;
+  if(n === MENU) return DOC_MAP.MENU;
+  if(n === Settings) return DOC_MAP.Settings;
+  if(n === SET_BOX_INFO) return DOC_MAP.SET_BOX_INFO;
+  if(n.id && DOC_MAP[n.id]) return DOC_MAP[n.id];
+  if(n.pageGroup === "service" && n.pageIndex) return DOC_MAP[`service_page_${n.pageIndex}`];
+  if(n.pageGroup === "info" && n.pageIndex) return DOC_MAP[`info_page_${n.pageIndex}`];
+  if(n.name && NAME_DOC_MAP[n.name]) return NAME_DOC_MAP[n.name];
+  return null;
+}
+
 const SEARCH_I18N = {
   EN: {
     placeholder: "Search screen... e.g. Probes settings, Climate settings, Fire alarm...",
@@ -1265,7 +1361,11 @@ function buildNavTree(){
     const newPath = [...pathNodes, n];
     const pathId = `p${idCounter++}`;
     navPathMap.set(pathId, newPath);
-    const label = `<span class="navLabel" data-path="${pathId}">${nodeLabel(n)}</span>`;
+    const docPath = docPathForNode(n);
+    const docLink = docPath
+      ? `<a class="navDoc" href="${docPath}" target="_blank" rel="noopener">DOC</a>`
+      : "";
+    const label = `<span class="navLabel" data-path="${pathId}">${nodeLabel(n)}</span>${docLink}`;
     const children = kids(n);
     if(children.length > 0){
       const openAttr = n === HOME ? " open" : "";
