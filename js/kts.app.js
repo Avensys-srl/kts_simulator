@@ -52,6 +52,145 @@ function nodeLabel(n){
   return n && n.name ? n.name : "";
 }
 
+const SEARCH_I18N = {
+  EN: {
+    placeholder: "Search screen... e.g. Probes settings, Climate settings, Fire alarm...",
+    clear: "CLEAR",
+    hint: [
+      "Type 2+ characters to see results.",
+      "Click a result to open the screen and see the full path.",
+      "If the unit is OFF (blackout), navigation is blocked: turn it on with the power button."
+    ],
+    pill: "Path available"
+  },
+  IT: {
+    placeholder: "Cerca schermata... es: Probes settings, Climate settings, Fire alarm...",
+    clear: "PULISCI",
+    hint: [
+      "Scrivi 2+ caratteri per vedere i risultati.",
+      "Clicca un risultato per aprire direttamente la schermata e vedere il percorso completo.",
+      "Se l'unità è OFF (blackout), la navigazione viene bloccata: riaccendi con il tasto power."
+    ],
+    pill: "Percorso disponibile"
+  },
+  DE: {
+    placeholder: "Bildschirm suchen... z. B. Probes settings, Climate settings, Fire alarm...",
+    clear: "LÖSCHEN",
+    hint: [
+      "Gib 2+ Zeichen ein, um Ergebnisse zu sehen.",
+      "Klicke ein Ergebnis, um den Bildschirm zu öffnen und den Pfad zu sehen.",
+      "Wenn das Gerät AUS ist (blackout), ist die Navigation gesperrt: mit Power einschalten."
+    ],
+    pill: "Pfad verfügbar"
+  },
+  FR: {
+    placeholder: "Rechercher écran... ex : Probes settings, Climate settings, Fire alarm...",
+    clear: "EFFACER",
+    hint: [
+      "Saisissez 2+ caractères pour voir les résultats.",
+      "Cliquez un résultat pour ouvrir l’écran et voir le chemin complet.",
+      "Si l’unité est OFF (blackout), la navigation est bloquée : rallumez avec le bouton power."
+    ],
+    pill: "Chemin disponible"
+  },
+  NL: {
+    placeholder: "Scherm zoeken... bijv. Probes settings, Climate settings, Fire alarm...",
+    clear: "WISSEN",
+    hint: [
+      "Typ 2+ tekens om resultaten te zien.",
+      "Klik op een resultaat om het scherm te openen en het volledige pad te zien.",
+      "Als de unit UIT is (blackout), is navigatie geblokkeerd: zet aan met de power-knop."
+    ],
+    pill: "Pad beschikbaar"
+  },
+  DK: {
+    placeholder: "Søg skærm... fx Probes settings, Climate settings, Fire alarm...",
+    clear: "RYD",
+    hint: [
+      "Skriv 2+ tegn for at se resultater.",
+      "Klik på et resultat for at åbne skærmen og se hele stien.",
+      "Hvis enheden er OFF (blackout), er navigation blokeret: tænd med power-knappen."
+    ],
+    pill: "Sti tilgængelig"
+  },
+  PT: {
+    placeholder: "Pesquisar ecrã... ex: Probes settings, Climate settings, Fire alarm...",
+    clear: "LIMPAR",
+    hint: [
+      "Escreva 2+ caracteres para ver resultados.",
+      "Clique num resultado para abrir o ecrã e ver o caminho completo.",
+      "Se a unidade estiver OFF (blackout), a navegação é bloqueada: ligue com o botão power."
+    ],
+    pill: "Caminho disponível"
+  },
+  PL: {
+    placeholder: "Szukaj ekranu... np. Probes settings, Climate settings, Fire alarm...",
+    clear: "WYCZYŚĆ",
+    hint: [
+      "Wpisz 2+ znaki, aby zobaczyć wyniki.",
+      "Kliknij wynik, aby otworzyć ekran i zobaczyć pełną ścieżkę.",
+      "Jeśli jednostka jest OFF (blackout), nawigacja jest zablokowana: włącz przyciskiem power."
+    ],
+    pill: "Ścieżka dostępna"
+  },
+  SL: {
+    placeholder: "Išči zaslon... npr. Probes settings, Climate settings, Fire alarm...",
+    clear: "POČISTI",
+    hint: [
+      "Vnesi 2+ znaka za prikaz rezultatov.",
+      "Klikni rezultat za odpiranje zaslona in ogled celotne poti.",
+      "Če je enota OFF (blackout), je navigacija blokirana: vključi s tipko power."
+    ],
+    pill: "Pot na voljo"
+  },
+  HU: {
+    placeholder: "Képernyő keresése... pl. Probes settings, Climate settings, Fire alarm...",
+    clear: "TÖRLÉS",
+    hint: [
+      "Írj be 2+ karaktert az eredményekhez.",
+      "Kattints egy találatra a képernyő megnyitásához és az útvonal megtekintéséhez.",
+      "Ha az egység OFF (blackout), a navigáció le van tiltva: kapcsold be a power gombbal."
+    ],
+    pill: "Útvonal elérhető"
+  },
+  RO: {
+    placeholder: "Caută ecran... ex: Probes settings, Climate settings, Fire alarm...",
+    clear: "ȘTERGE",
+    hint: [
+      "Scrie 2+ caractere pentru a vedea rezultate.",
+      "Apasă un rezultat pentru a deschide ecranul și a vedea calea completă.",
+      "Dacă unitatea este OFF (blackout), navigarea este blocată: pornește cu butonul power."
+    ],
+    pill: "Cale disponibilă"
+  },
+  BG: {
+    placeholder: "Търси екран... напр. Probes settings, Climate settings, Fire alarm...",
+    clear: "ИЗЧИСТИ",
+    hint: [
+      "Въведи 2+ символа за резултати.",
+      "Кликни резултат, за да отвориш екрана и да видиш пълния път.",
+      "Ако устройството е OFF (blackout), навигацията е блокирана: включи с power бутона."
+    ],
+    pill: "Път наличен"
+  },
+  TR: {
+    placeholder: "Ekran ara... örn: Probes settings, Climate settings, Fire alarm...",
+    clear: "TEMİZLE",
+    hint: [
+      "Sonuçlar için 2+ karakter yazın.",
+      "Ekranı açmak ve yolu görmek için bir sonuca tıklayın.",
+      "Birim OFF (blackout) ise gezinme engellenir: power tuşu ile açın."
+    ],
+    pill: "Yol mevcut"
+  }
+};
+
+function tSearch(key){
+  const lang = getLang();
+  const map = SEARCH_I18N[lang] || SEARCH_I18N.EN;
+  return map[key] || SEARCH_I18N.EN[key];
+}
+
 /* --------------------------
    Page variables registry
 -------------------------- */
@@ -126,7 +265,14 @@ function applyStaticTranslations(){
   if(btnOk) btnOk.textContent = "OK";
   if(btnHome) btnHome.textContent = "HOME";
   const searchClear = document.getElementById("searchClear");
-  if(searchClear) searchClear.textContent = "CLEAR";
+  if(searchClear) searchClear.textContent = tSearch("clear");
+  const searchInput = document.getElementById("searchInput");
+  if(searchInput) searchInput.setAttribute("placeholder", tSearch("placeholder"));
+  const searchHint = document.querySelector(".searchHint");
+  if(searchHint){
+    const lines = tSearch("hint");
+    searchHint.innerHTML = `- ${lines[0]}<br/>- ${lines[1]}<br/>- ${lines[2]}`;
+  }
 }
 
 /* --------------------------
@@ -202,7 +348,10 @@ function renderSettingsLanguage(){
       state.settings.languageDraft = null;
       saveLanguage();
       applyStaticTranslations();
+      buildIndex();
       buildNavTree();
+      const list = search(searchInput.value);
+      renderResults(list);
     }
     goBack();
   });
@@ -1095,10 +1244,10 @@ function buildIndex(){
     const newPath = [...pathNodes, n];
     if(n !== HOME){ // exclude HOME from results if you want
       index.push({
-        label: n.name,
+        label: nodeLabel(n),
         node: n,
         pathNodes: newPath,
-        pathText: newPath.map(x=>x.name).join(" \u2192 "),
+        pathText: newPath.map(x=>nodeLabel(x)).join(" \u2192 "),
         depth: newPath.length
       });
     }
@@ -1190,7 +1339,7 @@ function renderResults(list){
     <div class="resItem" data-idx="${idx}">
       <div class="resTitle">${r.label}</div>
       <div class="resPath">${r.pathText}</div>
-      <div class="pill">Path available</div>
+      <div class="pill">${tSearch("pill")}</div>
     </div>
   `).join("");
 
