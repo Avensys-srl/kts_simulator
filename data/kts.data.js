@@ -157,5 +157,7 @@ const Info = node("Info", [
   ], { pageGroup:"info", pageIndex:3, pageTotal:3 })
 ]);
 
-const MENU = node("MENU", [ SettingsP1, SettingsP2, Service, Info ]);
-const HOME = node("HOME", [ MENU ]);
+const Settings = node("Settings", [ SettingsP1, SettingsP2 ]);
+const MENU = node("MENU", [ Settings, Service, Info ]);
+const SET_BOX_INFO = node("SET BOX INFO");
+const HOME = node("HOME", [ MENU, SET_BOX_INFO ]);
