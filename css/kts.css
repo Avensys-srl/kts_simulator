@@ -79,6 +79,9 @@ h2{
   min-width:110px;
   font-size:12px;
 }
+#btnTheme[aria-pressed="true"]{
+  background:linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,.08));
+}
 .searchHint{
   margin-top:8px;
   font-size:12px;
@@ -669,6 +672,62 @@ h2{
   width:100%;
   background:#39e36a;
 }
+.outputLayout{
+  display:grid;
+  grid-template-columns: 110px 1fr;
+  gap:12px;
+}
+.outputSelectCol{
+  border:2px solid rgba(126,192,255,.7);
+  background:rgba(0,0,0,.18);
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.outputConfigCol{
+  border:2px solid rgba(126,192,255,.7);
+  background:rgba(0,0,0,.16);
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-height:220px;
+}
+.outputHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.outputPageNav{
+  display:flex;
+  gap:8px;
+}
+.outputPageNav .formBtn{
+  min-width:52px;
+  height:36px;
+}
+.outputEventGrid{
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap:8px;
+}
+.outputActionList{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.outputActionList .formBtn.wide{
+  min-width:100%;
+  min-height:64px;
+  line-height:1.2;
+}
+.outputState{
+  margin-top:auto;
+  display:flex;
+  gap:8px;
+}
 .climaTemp{
   font-weight:900;
   font-size:16px;
@@ -982,4 +1041,113 @@ h2{
   border:1px solid rgba(255,255,255,.14);
   border-radius:999px;
   background:rgba(255,255,255,.06);
+}
+
+/* ===== OUTLINE THEME ===== */
+body.theme-outline{
+  --bg:#ffffff;
+  --panel:#ffffff;
+  --blue1:#111111;
+  --blueGlow:rgba(0,0,0,.06);
+  --white:#111111;
+  --muted:#444444;
+  --green:#111111;
+  --red:#111111;
+  --segOff:transparent;
+  background:#ffffff;
+  color:#111111;
+}
+body.theme-outline .kts,
+body.theme-outline .searchBox,
+body.theme-outline .navPanel,
+body.theme-outline .home,
+body.theme-outline .menuScreen,
+body.theme-outline .setBoxScreen,
+body.theme-outline .formScreen,
+body.theme-outline .box,
+body.theme-outline .item,
+body.theme-outline .resItem,
+body.theme-outline .formFrame,
+body.theme-outline .ssFrame,
+body.theme-outline .climaFrame,
+body.theme-outline .climaBar,
+body.theme-outline .outputSelectCol,
+body.theme-outline .outputConfigCol,
+body.theme-outline .flag{
+  background:transparent !important;
+  border-color:#111111 !important;
+  color:#111111 !important;
+  box-shadow:none !important;
+  text-shadow:none !important;
+}
+body.theme-outline .screen,
+body.theme-outline .topbar,
+body.theme-outline .footer,
+body.theme-outline .results{
+  background:transparent !important;
+}
+body.theme-outline .powerBtn,
+body.theme-outline .speed-wedge,
+body.theme-outline .wedgeWrap,
+body.theme-outline .segments{
+  background:transparent !important;
+  box-shadow:none !important;
+}
+body.theme-outline .searchRow input,
+body.theme-outline .searchRow input::placeholder,
+body.theme-outline .searchHint,
+body.theme-outline .resPath,
+body.theme-outline .pill,
+body.theme-outline .formLabel,
+body.theme-outline .formHint,
+body.theme-outline .formListItem,
+body.theme-outline .path,
+body.theme-outline .navHeader,
+body.theme-outline .navDoc,
+body.theme-outline .right,
+body.theme-outline .status{
+  color:#333333 !important;
+}
+body.theme-outline .searchRow button,
+body.theme-outline .footer button,
+body.theme-outline .kbtn,
+body.theme-outline .menuBtn,
+body.theme-outline .menuTile,
+body.theme-outline .setBoxBtn,
+body.theme-outline .formBtn,
+body.theme-outline .settingsBtn,
+body.theme-outline .settingsArrow,
+body.theme-outline .settingsHome,
+body.theme-outline .langBtn,
+body.theme-outline .homeFab{
+  background:transparent !important;
+  border-color:#111111 !important;
+  color:#111111 !important;
+  box-shadow:none !important;
+}
+body.theme-outline .dot,
+body.theme-outline .dot.leaf,
+body.theme-outline .dot.node,
+body.theme-outline .segLayer.active,
+body.theme-outline .climaBarFill{
+  background:#111111 !important;
+}
+body.theme-outline .tri.up{
+  border-bottom-color:#111111 !important;
+}
+body.theme-outline .tri.down{
+  border-top-color:#111111 !important;
+}
+body.theme-outline .homeFab svg{
+  fill:#111111 !important;
+}
+body.theme-outline .flag{
+  filter:grayscale(1) contrast(1.4);
+}
+body.theme-outline .navGroup,
+body.theme-outline .navChildren{
+  border-color:rgba(0,0,0,.22) !important;
+}
+body.theme-outline .navCaret{
+  color:#666666 !important;
 }

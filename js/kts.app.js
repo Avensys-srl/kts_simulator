@@ -11,7 +11,7 @@ const state = {
     tLabel: "T. RETOUR",
     tValue: 15,
     tValueText: "15 \u00b0C",
-    speedPct: 0
+    speedPct: 20
   },
   settings: {
     language: "EN",
@@ -30,6 +30,17 @@ const state = {
     tempMoon: 18,
     menuPage: 0,
     languagePage: 0
+  },
+  service: {
+    outputSet: [0, 0],
+    outputDraft: [0, 0],
+    outputSelected: 0,
+    outputPage: 0,
+    outputAccessoryValve: true,
+    outputEditorActive: false
+  },
+  ui: {
+    theme: "default"
   },
   timers: {
     homeInfoTimer: null
@@ -353,6 +364,38 @@ function loadLanguage(){
   }
 }
 
+function saveTheme(){
+  try{
+    localStorage.setItem("kts.theme", state.ui.theme);
+  }catch(e){
+    // ignore storage errors
+  }
+}
+
+function loadTheme(){
+  try{
+    const val = localStorage.getItem("kts.theme");
+    if(val === "outline" || val === "default") state.ui.theme = val;
+  }catch(e){
+    // ignore storage errors
+  }
+}
+
+function themeLabel(){
+  const isIt = getLang() === "IT";
+  if(state.ui.theme === "outline") return isIt ? "COLORE" : "COLOR";
+  return "OUTLINE";
+}
+
+function applyTheme(){
+  document.body.classList.toggle("theme-outline", state.ui.theme === "outline");
+  const btnTheme = document.getElementById("btnTheme");
+  if(btnTheme){
+    btnTheme.textContent = themeLabel();
+    btnTheme.setAttribute("aria-pressed", state.ui.theme === "outline" ? "true" : "false");
+  }
+}
+
 function applyStaticTranslations(){
   const btnBack = document.getElementById("btnBack");
   const btnOk = document.getElementById("btnOk");
@@ -369,6 +412,7 @@ function applyStaticTranslations(){
     const lines = tSearch("hint");
     searchHint.innerHTML = `- ${lines[0]}<br/>- ${lines[1]}<br/>- ${lines[2]}`;
   }
+  applyTheme();
 }
 
 /* --------------------------
@@ -853,6 +897,167 @@ function renderWeeklySpeed(){
   screen.querySelector(".formOk").addEventListener("click", goBack);
 }
 
+function outputSelectedByte(){
+  return state.service.outputDraft[state.service.outputSelected] || 0;
+}
+
+function outputEventValue(){
+  return outputSelectedByte() & 0x7f;
+}
+
+function outputActionOpen(){
+  return (outputSelectedByte() & 0x80) !== 0;
+}
+
+function setOutputEvent(value){
+  const actionBit = outputSelectedByte() & 0x80;
+  state.service.outputDraft[state.service.outputSelected] = actionBit | (value & 0x7f);
+}
+
+function setOutputAction(isOpen){
+  const eventVal = outputEventValue();
+  state.service.outputDraft[state.service.outputSelected] = (isOpen ? 0x80 : 0) | eventVal;
+}
+
+function openOutputEditor(){
+  state.service.outputDraft = state.service.outputSet.slice();
+  state.service.outputSelected = 0;
+  state.service.outputPage = 0;
+  state.service.outputEditorActive = true;
+}
+
+function closeOutputEditor(discardChanges){
+  if(discardChanges){
+    state.service.outputDraft = state.service.outputSet.slice();
+  }else{
+    state.service.outputSet = state.service.outputDraft.slice();
+  }
+  state.service.outputPage = 0;
+  state.service.outputSelected = 0;
+  state.service.outputEditorActive = false;
+}
+
+function renderOutputSettings(){
+  const screen = document.getElementById("screen");
+  const events = [
+    { val: 0, label: t("CLTextId_DISABLE") },
+    { val: 1, label: t("CLTextId_BYPASS_OPEN") },
+    { val: 3, label: t("CLTextId_UNIT_RUN") },
+    { val: 2, label: t("CLTextId_UNIT_FAULT") },
+    { val: 5, label: "SUM/WIN" },
+    { val: 6, label: "MAX SPEED" }
+  ];
+  if(state.service.outputAccessoryValve) events.push({ val: 4, label: "VALVE" });
+
+  const selectedOutput = state.service.outputSelected;
+  const page = state.service.outputPage;
+  const selectedEvent = outputEventValue();
+  const isOpen = outputActionOpen();
+  const pinMap = selectedOutput === 0 ? "X1 (11-10)" : "X1 (9-8)";
+  const draft0 = state.service.outputDraft[0] || 0;
+  const draft1 = state.service.outputDraft[1] || 0;
+
+  screen.innerHTML = `
+    <div class="formScreen outputScreen">
+      <div class="formTitle">${t("CLTextId_OUTPUT_CONFIG")} <span class="formPage">${page + 1}/2</span></div>
+      <div class="outputLayout">
+        <div class="outputSelectCol">
+          <div class="formLabel">OUTPUT</div>
+          <div class="formBtn ${selectedOutput===0 ? "selected" : ""}" id="outSel1">1</div>
+          <div class="formBtn ${selectedOutput===1 ? "selected" : ""}" id="outSel2">2</div>
+          <div class="formBtn ${state.service.outputAccessoryValve ? "on" : "off"}" id="outValve">AWP</div>
+        </div>
+        <div class="outputConfigCol">
+          <div class="outputHeader">
+            <div class="formLabel">${page===0 ? t("CLTextId_SELECT_EVENT") : t("CLTextId_SELECT_ACTION")}</div>
+            <div class="outputPageNav">
+              <button class="formBtn" id="outPrev">&lt;&lt;</button>
+              <button class="formBtn" id="outNext">&gt;&gt;</button>
+            </div>
+          </div>
+          ${page === 0 ? `
+            <div class="outputEventGrid">
+              ${events.map(ev => `
+                <div class="formBtn ${selectedEvent===ev.val ? "selected" : ""}" data-ev="${ev.val}">${ev.label}</div>
+              `).join("")}
+            </div>
+          ` : `
+            <div class="outputActionList">
+              <div class="formBtn wide ${!isOpen ? "selected" : ""}" id="outClosed">${pinMap}<br/>${t("CLTextId_CLOSED")}</div>
+              <div class="formBtn wide ${isOpen ? "selected" : ""}" id="outOpen">${pinMap}<br/>${t("CLTextId_OPEN")}</div>
+            </div>
+          `}
+          <div class="outputState">
+            <span class="badge">OUT1: ${draft0}</span>
+            <span class="badge">OUT2: ${draft1}</span>
+          </div>
+        </div>
+      </div>
+      <div class="formFooter">
+        <button class="formOk">OK</button>
+        <button class="formBack">${t("CLTextId_BACK")}</button>
+      </div>
+    </div>
+  `;
+
+  screen.querySelector("#outSel1").addEventListener("click", ()=>{
+    state.service.outputSelected = 0;
+    renderOutputSettings();
+  });
+  screen.querySelector("#outSel2").addEventListener("click", ()=>{
+    state.service.outputSelected = 1;
+    renderOutputSettings();
+  });
+  screen.querySelector("#outValve").addEventListener("click", ()=>{
+    state.service.outputAccessoryValve = !state.service.outputAccessoryValve;
+    if(!state.service.outputAccessoryValve){
+      for(let i=0;i<state.service.outputDraft.length;i++){
+        const ev = state.service.outputDraft[i] & 0x7f;
+        if(ev === 4){
+          state.service.outputDraft[i] = state.service.outputDraft[i] & 0x80;
+        }
+      }
+    }
+    renderOutputSettings();
+  });
+  screen.querySelector("#outPrev").addEventListener("click", ()=>{
+    state.service.outputPage = Math.max(0, state.service.outputPage - 1);
+    renderOutputSettings();
+  });
+  screen.querySelector("#outNext").addEventListener("click", ()=>{
+    state.service.outputPage = Math.min(1, state.service.outputPage + 1);
+    renderOutputSettings();
+  });
+
+  if(page === 0){
+    screen.querySelectorAll("[data-ev]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const ev = parseInt(btn.getAttribute("data-ev"), 10);
+        setOutputEvent(ev);
+        renderOutputSettings();
+      });
+    });
+  }else{
+    screen.querySelector("#outClosed").addEventListener("click", ()=>{
+      setOutputAction(false);
+      renderOutputSettings();
+    });
+    screen.querySelector("#outOpen").addEventListener("click", ()=>{
+      setOutputAction(true);
+      renderOutputSettings();
+    });
+  }
+
+  screen.querySelector(".formBack").addEventListener("click", ()=>{
+    closeOutputEditor(true);
+    goBack();
+  });
+  screen.querySelector(".formOk").addEventListener("click", ()=>{
+    closeOutputEditor(false);
+    goBack();
+  });
+}
+
 const screenRenderers = {
   settings_language: renderSettingsLanguage,
   settings_screensaver: renderSettingsScreensaver,
@@ -862,6 +1067,7 @@ const screenRenderers = {
   settings_party: renderSettingsParty,
   settings_password: renderSettingsPassword,
   settings_rfm: renderSettingsRfm,
+  output_settings: renderOutputSettings,
   weekly_program: renderWeeklyProgram,
   weekly_view: renderWeeklyView,
   weekly_speed: renderWeeklySpeed
@@ -1008,6 +1214,7 @@ function renderHome(){
   document.getElementById("pwrBtn").addEventListener("click", () => {
     state.home.unitOn = !state.home.unitOn;
     if(!state.home.unitOn) state.home.speedPct = 0;
+    else state.home.speedPct = Math.max(20, state.home.speedPct);
     syncOffState();
     renderHome();
     updateButtons();
@@ -1021,7 +1228,7 @@ function renderHome(){
   });
   document.getElementById("spdDn").addEventListener("click", () => {
     if(!state.home.unitOn) return;
-    state.home.speedPct = Math.max(0, state.home.speedPct - pageVars.home.speedStep);
+    state.home.speedPct = Math.max(20, state.home.speedPct - pageVars.home.speedStep);
     renderHome();
   });
 
@@ -1244,6 +1451,9 @@ function render(){
     return;
   }
   if(isScreenNode(current()) && screenRenderers[current().id]){
+    if(current().id === "output_settings" && !state.service.outputEditorActive){
+      openOutputEditor();
+    }
     screenRenderers[current().id]();
     updateButtons();
     return;
@@ -1254,14 +1464,33 @@ function render(){
 /* --------------------------
    Navigation
 -------------------------- */
-function goHome(){ if(!state.home.unitOn) return; state.nav.stack = [HOME]; state.nav.selectedIndex = 0; render(); }
-function goBack(){ if(!state.home.unitOn) return; if(state.nav.stack.length>1){ state.nav.stack.pop(); state.nav.selectedIndex=0; render(); } }
+function goHome(){
+  if(!state.home.unitOn) return;
+  if(current() && current().id === "output_settings" && state.service.outputEditorActive){
+    closeOutputEditor(true);
+  }
+  state.nav.stack = [HOME];
+  state.nav.selectedIndex = 0;
+  render();
+}
+function goBack(){
+  if(!state.home.unitOn) return;
+  if(current() && current().id === "output_settings" && state.service.outputEditorActive){
+    closeOutputEditor(true);
+  }
+  if(state.nav.stack.length>1){
+    state.nav.stack.pop();
+    state.nav.selectedIndex=0;
+    render();
+  }
+}
 function enterSelected(){
   if(!state.home.unitOn) return;
   const k = kids(current());
   const chosen = k[state.nav.selectedIndex];
   if(!chosen) return;
   if(!isLeaf(chosen) || isScreenNode(chosen)){
+    if(chosen.id === "output_settings") openOutputEditor();
     state.nav.stack.push(chosen);
     state.nav.selectedIndex = 0;
     render();
@@ -1325,6 +1554,11 @@ document.getElementById("btnBack").addEventListener("click", goBack);
 document.getElementById("btnOk").addEventListener("click", enterSelected);
 document.getElementById("btnPrev").addEventListener("click", ()=>pageStep(-1));
 document.getElementById("btnNext").addEventListener("click", ()=>pageStep(+1));
+document.getElementById("btnTheme").addEventListener("click", ()=>{
+  state.ui.theme = state.ui.theme === "outline" ? "default" : "outline";
+  saveTheme();
+  applyTheme();
+});
 
 /* --------------------------
    SEARCH INDEX
@@ -1477,6 +1711,7 @@ searchClear.addEventListener("click", ()=>{
 /* Init */
 loadPageVars();
 loadLanguage();
+loadTheme();
 buildIndex();
 buildNavTree();
 applyStaticTranslations();

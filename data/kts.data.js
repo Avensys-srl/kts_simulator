@@ -69,7 +69,7 @@ const ServiceP1 = node("Page 1/6", [
 const Service = node("Service (password required)", [
   ServiceP1,
   node("Page 2/6", [
-    node("Output settings", [], { textId: "CLTextId_OUTPUT_CONFIG" }),
+    node("Output settings", [], { id: "output_settings", textId: "CLTextId_OUTPUT_CONFIG" }),
     node("BPD settings", [], { textId: "CLTextId_BPD_SETTINGS" }),
     node("Unbalanced airflow", [], { textId: "CLTextId_UNBALANCE_AIRFLOW" }),
     node("Filter settings", [], { textId: "CLTextId_FILTER_SETTINGS" })
