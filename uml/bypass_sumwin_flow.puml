@@ -1,0 +1,55 @@
+@startuml
+skinparam activity {
+  BackgroundColor #0b1220
+  BorderColor #7ec0ff
+  FontColor #eaf0ff
+}
+
+start
+:Ciclo di controllo output (OUT1 / OUT2);
+:Leggi Set_Output[n];
+
+if ((Set_Output[n] & 0x7F) == SUM/WIN ?) then (si)
+  :Evento uscita = SUM/WIN;
+
+  :Leggi Config_Bypass;
+  if (Config_Bypass = AUTOMATIC\noppure AUTO_ON_OFF ?) then (si)
+    :Leggi T_ext e Bypass_minTempExt;
+    if (T_ext <= Bypass_minTempExt ?) then (si)
+      :Stato stagionale = WINTER;
+      :Segnale SUM/WIN = 0;
+    else (no)
+      :Stato stagionale = SUMMER;
+      :Segnale SUM/WIN = 1;
+    endif
+  else (no)
+    if (Config_Bypass = EXT_CTRL ?) then (si)
+      :Stato SUM/WIN da ingresso esterno\no logica impianto;
+    else (manual)
+      :Bypass manuale OPEN/CLOSE;
+      :Stato SUM/WIN da logica clima attiva;
+    endif
+  endif
+
+  if ((Set_Output[n] & 0x80) == 0 ?) then (azione normale)
+    :Relay segue Segnale SUM/WIN;
+  else (azione invertita)
+    :Relay = NOT(Segnale SUM/WIN);
+  endif
+
+  :Aggiorna uscita fisica n;
+else (no)
+  :Evento uscita diverso da SUM/WIN;
+  :Nessuna relazione diretta con Bypass_minTempExt;
+endif
+
+stop
+
+note right
+  Mappa usata:
+  - Evento SUM/WIN = tipo output 5 (bit bassi)
+  - Bit 0x80 = inversione azione relay
+  - Bypass_minTempExt entra nel ramo automatico
+    per determinare la condizione stagionale.
+end note
+@enduml

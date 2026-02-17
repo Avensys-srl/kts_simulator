@@ -70,8 +70,8 @@ const Service = node("Service (password required)", [
   ServiceP1,
   node("Page 2/6", [
     node("Output settings", [], { id: "output_settings", textId: "CLTextId_OUTPUT_CONFIG" }),
-    node("BPD settings", [], { textId: "CLTextId_BPD_SETTINGS" }),
-    node("Unbalanced airflow", [], { textId: "CLTextId_UNBALANCE_AIRFLOW" }),
+    node("BPD settings", [], { id: "bpd_settings", textId: "CLTextId_BPD_SETTINGS" }),
+    node("Unbalanced airflow", [], { id: "unbalanced_airflow", textId: "CLTextId_UNBALANCE_AIRFLOW" }),
     node("Filter settings", [], { textId: "CLTextId_FILTER_SETTINGS" })
   ], { pageGroup:"service", pageIndex:2, pageTotal:6 }),
   node("Page 3/6", [

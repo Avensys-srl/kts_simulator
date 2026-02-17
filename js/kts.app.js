@@ -22,6 +22,11 @@ const state = {
     partyEnabled: false,
     partyMinutes: 60,
     passwordEnabled: false,
+    endUserPassword: "00000",
+    passwordFlowStep: "menu",
+    passwordInput: "",
+    passwordNewDraft: "",
+    passwordMessage: "",
     rfmChannel: 1,
     climaPreheater: false,
     climaSummer: true,
@@ -36,8 +41,29 @@ const state = {
     outputDraft: [0, 0],
     outputSelected: 0,
     outputPage: 0,
-    outputAccessoryValve: true,
-    outputEditorActive: false
+    outputAccessoryValve: false,
+    outputEditorActive: false,
+    bpdSet: {
+      config: 0,
+      minTemp: 15.0,
+      rotation: 0
+    },
+    bpdDraft: {
+      config: 0,
+      minTemp: 15.0,
+      rotation: 0
+    },
+    bpdPage: 0,
+    bpdEditorActive: false,
+    unbalanceSet: {
+      enabled: true,
+      value: -20
+    },
+    unbalanceDraft: {
+      enabled: true,
+      value: -20
+    },
+    unbalanceEditorActive: false
   },
   ui: {
     theme: "default"
@@ -459,7 +485,7 @@ function renderSettingsLanguage(){
       <div class="langGrid">
         ${pageItems.map(l => `
           <div class="langBtn ${selectedLang===l.id ? "selected" : ""}" data-lang="${l.id}">
-            <div class="flag ${l.flag}"></div>
+            <div class="flag ${l.flag}" data-code="${l.id}"></div>
           </div>
         `).join("")}
       </div>
@@ -741,32 +767,148 @@ function renderSettingsParty(){
 }
 
 function renderSettingsPassword(){
+  const isIt = getLang() === "IT";
+  const stepLabels = {
+    current: isIt ? "PASSWORD ATTUALE" : "CURRENT PASSWORD",
+    new: isIt ? "NUOVA PASSWORD" : "NEW PASSWORD",
+    confirm: isIt ? "CONFERMA PASSWORD" : "CONFIRM PASSWORD"
+  };
+  const msgSuccess = isIt ? "PASSWORD AGGIORNATA" : "PASSWORD UPDATED";
+
+  function openChangePasswordFlow(){
+    state.settings.passwordFlowStep = "current";
+    state.settings.passwordInput = "";
+    state.settings.passwordNewDraft = "";
+    state.settings.passwordMessage = "";
+  }
+
+  function cancelChangePasswordFlow(){
+    state.settings.passwordFlowStep = "menu";
+    state.settings.passwordInput = "";
+    state.settings.passwordNewDraft = "";
+    state.settings.passwordMessage = "";
+  }
+
+  function appendPasswordDigit(digit){
+    if(state.settings.passwordInput.length >= 5) return;
+    state.settings.passwordInput += String(digit);
+  }
+
+  function backspacePasswordDigit(){
+    if(state.settings.passwordInput.length === 0) return;
+    state.settings.passwordInput = state.settings.passwordInput.slice(0, -1);
+  }
+
+  function submitPasswordStep(){
+    if(state.settings.passwordInput.length !== 5) return;
+
+    if(state.settings.passwordFlowStep === "current"){
+      if(state.settings.passwordInput !== state.settings.endUserPassword){
+        state.settings.passwordMessage = t("CLTextId_PASSWORD_INCORRECT", isIt ? "PASSWORD ERRATA" : "PASSWORD INCORRECT");
+        state.settings.passwordInput = "";
+        return;
+      }
+      state.settings.passwordFlowStep = "new";
+      state.settings.passwordInput = "";
+      state.settings.passwordMessage = "";
+      return;
+    }
+
+    if(state.settings.passwordFlowStep === "new"){
+      state.settings.passwordNewDraft = state.settings.passwordInput;
+      state.settings.passwordFlowStep = "confirm";
+      state.settings.passwordInput = "";
+      state.settings.passwordMessage = "";
+      return;
+    }
+
+    if(state.settings.passwordFlowStep === "confirm"){
+      if(state.settings.passwordInput !== state.settings.passwordNewDraft){
+        state.settings.passwordMessage = t("CLTextId_PASSWORD_INCORRECT", isIt ? "PASSWORD ERRATA" : "PASSWORD INCORRECT");
+        state.settings.passwordInput = "";
+        state.settings.passwordFlowStep = "new";
+        return;
+      }
+      state.settings.endUserPassword = state.settings.passwordInput;
+      state.settings.passwordMessage = msgSuccess;
+      state.settings.passwordInput = "";
+      state.settings.passwordNewDraft = "";
+      state.settings.passwordFlowStep = "menu";
+    }
+  }
+
   const screen = document.getElementById("screen");
+  const inFlow = state.settings.passwordFlowStep !== "menu";
+  const masked = "*".repeat(state.settings.passwordInput.length);
+  const statusMsg = state.settings.passwordMessage;
+  const flowStepLabel = inFlow ? stepLabels[state.settings.passwordFlowStep] : "";
+
   screen.innerHTML = `
     <div class="formScreen">
       <div class="formTitle">${t("CLTextId_PASSWORD_SETTINGS")}</div>
-      <div class="formRow">
-        <div class="formBtn ${state.settings.passwordEnabled ? "on" : "off"}" id="pwdToggle">
-          ${state.settings.passwordEnabled ? "ON" : "OFF"}
+      ${!inFlow ? `
+        <div class="formRow">
+          <div class="formBtn ${state.settings.passwordEnabled ? "on" : "off"}" id="pwdToggle">
+            ${state.settings.passwordEnabled ? "ON" : "OFF"}
+          </div>
+          <div class="formBtn wide" id="pwdChange">${t("CLTextId_CHANGE_PASSWORD")}</div>
         </div>
-        <div class="formBtn wide" id="pwdChange">${t("CLTextId_CHANGE_PASSWORD")}</div>
-      </div>
+      ` : `
+        <div class="pwdPanel">
+          <div class="formLabel">${flowStepLabel}</div>
+          <div class="pwdMask">${masked || "&nbsp;"}</div>
+          <div class="pwdPad">
+            ${[1,2,3,4,5,6,7,8,9].map(n=>`<div class="formBtn pwdKey" data-digit="${n}">${n}</div>`).join("")}
+            <div class="formBtn pwdKey" id="pwdBksp">&#9003;</div>
+            <div class="formBtn pwdKey" data-digit="0">0</div>
+            <div class="formBtn pwdKey ${state.settings.passwordInput.length===5 ? "" : "off"}" id="pwdSubmit">OK</div>
+          </div>
+        </div>
+      `}
+      <div class="formHint">${statusMsg || "&nbsp;"}</div>
       <div class="formFooter">
-        <button class="formOk">OK</button>
+        <button class="formOk">${inFlow ? "OK" : "OK"}</button>
         <button class="formBack">${t("CLTextId_BACK")}</button>
       </div>
     </div>
   `;
-  screen.querySelector("#pwdToggle").addEventListener("click", ()=>{
-    state.settings.passwordEnabled = !state.settings.passwordEnabled;
+
+  if(!inFlow){
+    screen.querySelector("#pwdToggle").addEventListener("click", ()=>{
+      state.settings.passwordEnabled = !state.settings.passwordEnabled;
+      renderSettingsPassword();
+    });
+    screen.querySelector("#pwdChange").addEventListener("click", ()=>{
+      openChangePasswordFlow();
+      renderSettingsPassword();
+    });
+    screen.querySelector(".formBack").addEventListener("click", goBack);
+    screen.querySelector(".formOk").addEventListener("click", goBack);
+    return;
+  }
+
+  screen.querySelectorAll("[data-digit]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      appendPasswordDigit(btn.getAttribute("data-digit"));
+      renderSettingsPassword();
+    });
+  });
+  screen.querySelector("#pwdBksp").addEventListener("click", ()=>{
+    backspacePasswordDigit();
     renderSettingsPassword();
   });
-  screen.querySelector("#pwdChange").addEventListener("click", ()=>{
-    // placeholder action
+  screen.querySelector("#pwdSubmit").addEventListener("click", ()=>{
+    submitPasswordStep();
     renderSettingsPassword();
   });
-  screen.querySelector(".formBack").addEventListener("click", goBack);
-  screen.querySelector(".formOk").addEventListener("click", goBack);
+  screen.querySelector(".formBack").addEventListener("click", ()=>{
+    cancelChangePasswordFlow();
+    renderSettingsPassword();
+  });
+  screen.querySelector(".formOk").addEventListener("click", ()=>{
+    submitPasswordStep();
+    renderSettingsPassword();
+  });
 }
 
 function renderSettingsRfm(){
@@ -937,6 +1079,144 @@ function closeOutputEditor(discardChanges){
   state.service.outputEditorActive = false;
 }
 
+function openBpdEditor(){
+  state.service.bpdDraft = {
+    config: state.service.bpdSet.config,
+    minTemp: state.service.bpdSet.minTemp,
+    rotation: state.service.bpdSet.rotation
+  };
+  state.service.bpdPage = 0;
+  state.service.bpdEditorActive = true;
+}
+
+function closeBpdEditor(discardChanges){
+  if(!discardChanges){
+    state.service.bpdSet = {
+      config: state.service.bpdDraft.config,
+      minTemp: state.service.bpdDraft.minTemp,
+      rotation: state.service.bpdDraft.rotation
+    };
+  }else{
+    state.service.bpdDraft = {
+      config: state.service.bpdSet.config,
+      minTemp: state.service.bpdSet.minTemp,
+      rotation: state.service.bpdSet.rotation
+    };
+  }
+  state.service.bpdPage = 0;
+  state.service.bpdEditorActive = false;
+}
+
+function bypassConfigLabel(config){
+  switch(config){
+    case 0: return t("CLTextId_AUT_ON", "AUT. ON");
+    case 1: return t("CLTextId_EXTERNAL_CONTROL", "EXTERNAL CONTROL");
+    case 2: return t("CLTextId_MANUAL_OFF", "MAN. OFF");
+    case 3: return t("CLTextId_MANUAL_ON", "MAN. ON");
+    case 4: return "AUT ON/OFF";
+    default: return t("CLTextId_AUT_ON", "AUT. ON");
+  }
+}
+
+function renderBpdSettings(){
+  const screen = document.getElementById("screen");
+  const page = state.service.bpdPage;
+  const cfg = state.service.bpdDraft.config;
+  const extCtrl = cfg === 1;
+
+  screen.innerHTML = `
+    <div class="formScreen bpdScreen">
+      <div class="formTitle">${t("CLTextId_BPD_SETTINGS")} <span class="formPage">${page + 1}/2</span></div>
+      <div class="bpdHeaderRow">
+        <div class="formLabel">${t("CLTextId_BYPASS")}</div>
+        <div class="badge">${bypassConfigLabel(cfg)}</div>
+      </div>
+
+      ${page === 0 ? `
+        <div class="bpdConfigGrid">
+          <div class="formBtn ${cfg===0 ? "selected" : ""}" data-bpd-cfg="0">${t("CLTextId_AUT_ON", "AUT. ON")}</div>
+          <div class="formBtn ${cfg===4 ? "selected" : ""}" data-bpd-cfg="4">AUT ON/OFF</div>
+          <div class="formBtn ${cfg===1 ? "selected" : ""}" data-bpd-cfg="1">${t("CLTextId_EXTERNAL_CONTROL", "EXTERNAL CONTROL")}</div>
+          <div class="formBtn ${cfg===3 ? "selected" : ""}" data-bpd-cfg="3">${t("CLTextId_MANUAL_ON", "MAN. ON")}</div>
+          <div class="formBtn ${cfg===2 ? "selected" : ""}" data-bpd-cfg="2">${t("CLTextId_MANUAL_OFF", "MAN. OFF")}</div>
+        </div>
+
+        ${extCtrl ? `
+          <div class="bpdExtMsg">${t("CLTextId_BYPASS_OPERATED_BY_EXT_INPUT", "BYPASS IS OPERATED BY AN EXTERNAL INPUT")}</div>
+        ` : `
+          <div class="bpdTempBox">
+            <div class="formLabel">${t("CLTextId_BYPASS_MIN_EXT_TEMPERATURE", "EXT. TEMP. MIN.")}</div>
+            <div class="bpdTempValue">${state.service.bpdDraft.minTemp.toFixed(1)} °C</div>
+            <div class="bpdTempBtns">
+              <div class="formBtn" id="bpdTempDown">▼</div>
+              <div class="formBtn" id="bpdTempUp">▲</div>
+            </div>
+          </div>
+        `}
+      ` : `
+        <div class="bpdRotationBox">
+          <div class="formLabel">${t("CLTextId_COUNTER", "ROTATION")}</div>
+          <div class="bpdConfigGrid">
+            <div class="formBtn ${state.service.bpdDraft.rotation===0 ? "selected" : ""}" id="bpdRotCw">CLOCKWISE</div>
+            <div class="formBtn ${state.service.bpdDraft.rotation===255 ? "selected" : ""}" id="bpdRotCcw">COUNTER-CLOCKWISE</div>
+          </div>
+        </div>
+      `}
+
+      <div class="formFooter">
+        <button class="formOk">OK</button>
+        <button class="formBack">${t("CLTextId_BACK")}</button>
+        <button class="formPrev">&lt;&lt;</button>
+        <button class="formNext">&gt;&gt;</button>
+      </div>
+    </div>
+  `;
+
+  screen.querySelectorAll("[data-bpd-cfg]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      state.service.bpdDraft.config = parseInt(btn.getAttribute("data-bpd-cfg"), 10);
+      renderBpdSettings();
+    });
+  });
+
+  const tempUp = screen.querySelector("#bpdTempUp");
+  const tempDown = screen.querySelector("#bpdTempDown");
+  if(tempUp){
+    tempUp.addEventListener("click", ()=>{
+      state.service.bpdDraft.minTemp = Math.min(30.0, +(state.service.bpdDraft.minTemp + 0.5).toFixed(1));
+      renderBpdSettings();
+    });
+  }
+  if(tempDown){
+    tempDown.addEventListener("click", ()=>{
+      state.service.bpdDraft.minTemp = Math.max(-10.0, +(state.service.bpdDraft.minTemp - 0.5).toFixed(1));
+      renderBpdSettings();
+    });
+  }
+
+  const rotCw = screen.querySelector("#bpdRotCw");
+  const rotCcw = screen.querySelector("#bpdRotCcw");
+  if(rotCw) rotCw.addEventListener("click", ()=>{ state.service.bpdDraft.rotation = 0; renderBpdSettings(); });
+  if(rotCcw) rotCcw.addEventListener("click", ()=>{ state.service.bpdDraft.rotation = 255; renderBpdSettings(); });
+
+  screen.querySelector(".formPrev").addEventListener("click", ()=>{
+    state.service.bpdPage = Math.max(0, state.service.bpdPage - 1);
+    renderBpdSettings();
+  });
+  screen.querySelector(".formNext").addEventListener("click", ()=>{
+    state.service.bpdPage = Math.min(1, state.service.bpdPage + 1);
+    renderBpdSettings();
+  });
+  screen.querySelector(".formBack").addEventListener("click", ()=>{
+    closeBpdEditor(true);
+    goBack();
+  });
+  screen.querySelector(".formOk").addEventListener("click", ()=>{
+    closeBpdEditor(false);
+    goBack();
+  });
+}
+
 function renderOutputSettings(){
   const screen = document.getElementById("screen");
   const events = [
@@ -953,9 +1233,6 @@ function renderOutputSettings(){
   const page = state.service.outputPage;
   const selectedEvent = outputEventValue();
   const isOpen = outputActionOpen();
-  const pinMap = selectedOutput === 0 ? "X1 (11-10)" : "X1 (9-8)";
-  const draft0 = state.service.outputDraft[0] || 0;
-  const draft1 = state.service.outputDraft[1] || 0;
 
   screen.innerHTML = `
     <div class="formScreen outputScreen">
@@ -965,15 +1242,10 @@ function renderOutputSettings(){
           <div class="formLabel">OUTPUT</div>
           <div class="formBtn ${selectedOutput===0 ? "selected" : ""}" id="outSel1">1</div>
           <div class="formBtn ${selectedOutput===1 ? "selected" : ""}" id="outSel2">2</div>
-          <div class="formBtn ${state.service.outputAccessoryValve ? "on" : "off"}" id="outValve">AWP</div>
         </div>
         <div class="outputConfigCol">
           <div class="outputHeader">
-            <div class="formLabel">${page===0 ? t("CLTextId_SELECT_EVENT") : t("CLTextId_SELECT_ACTION")}</div>
-            <div class="outputPageNav">
-              <button class="formBtn" id="outPrev">&lt;&lt;</button>
-              <button class="formBtn" id="outNext">&gt;&gt;</button>
-            </div>
+            <div class="formLabel outputHeaderLabel">${page===0 ? t("CLTextId_SELECT_EVENT") : t("CLTextId_SELECT_ACTION")}</div>
           </div>
           ${page === 0 ? `
             <div class="outputEventGrid">
@@ -983,19 +1255,11 @@ function renderOutputSettings(){
             </div>
           ` : `
             <div class="outputActionList">
-              <div class="formBtn wide ${!isOpen ? "selected" : ""}" id="outClosed">${pinMap}<br/>${t("CLTextId_CLOSED")}</div>
-              <div class="formBtn wide ${isOpen ? "selected" : ""}" id="outOpen">${pinMap}<br/>${t("CLTextId_OPEN")}</div>
+              <div class="formBtn wide ${!isOpen ? "selected" : ""}" id="outClosed">${t("CLTextId_CLOSED")}</div>
+              <div class="formBtn wide ${isOpen ? "selected" : ""}" id="outOpen">${t("CLTextId_OPEN")}</div>
             </div>
           `}
-          <div class="outputState">
-            <span class="badge">OUT1: ${draft0}</span>
-            <span class="badge">OUT2: ${draft1}</span>
-          </div>
         </div>
-      </div>
-      <div class="formFooter">
-        <button class="formOk">OK</button>
-        <button class="formBack">${t("CLTextId_BACK")}</button>
       </div>
     </div>
   `;
@@ -1008,27 +1272,6 @@ function renderOutputSettings(){
     state.service.outputSelected = 1;
     renderOutputSettings();
   });
-  screen.querySelector("#outValve").addEventListener("click", ()=>{
-    state.service.outputAccessoryValve = !state.service.outputAccessoryValve;
-    if(!state.service.outputAccessoryValve){
-      for(let i=0;i<state.service.outputDraft.length;i++){
-        const ev = state.service.outputDraft[i] & 0x7f;
-        if(ev === 4){
-          state.service.outputDraft[i] = state.service.outputDraft[i] & 0x80;
-        }
-      }
-    }
-    renderOutputSettings();
-  });
-  screen.querySelector("#outPrev").addEventListener("click", ()=>{
-    state.service.outputPage = Math.max(0, state.service.outputPage - 1);
-    renderOutputSettings();
-  });
-  screen.querySelector("#outNext").addEventListener("click", ()=>{
-    state.service.outputPage = Math.min(1, state.service.outputPage + 1);
-    renderOutputSettings();
-  });
-
   if(page === 0){
     screen.querySelectorAll("[data-ev]").forEach(btn=>{
       btn.addEventListener("click", ()=>{
@@ -1047,13 +1290,97 @@ function renderOutputSettings(){
       renderOutputSettings();
     });
   }
+}
 
+function openUnbalanceEditor(){
+  state.service.unbalanceDraft = {
+    enabled: state.service.unbalanceSet.enabled,
+    value: state.service.unbalanceSet.value
+  };
+  state.service.unbalanceEditorActive = true;
+}
+
+function closeUnbalanceEditor(discardChanges){
+  if(!discardChanges){
+    state.service.unbalanceSet = {
+      enabled: state.service.unbalanceDraft.enabled,
+      value: state.service.unbalanceDraft.value
+    };
+  }else{
+    state.service.unbalanceDraft = {
+      enabled: state.service.unbalanceSet.enabled,
+      value: state.service.unbalanceSet.value
+    };
+  }
+  state.service.unbalanceEditorActive = false;
+}
+
+function renderUnbalancedAirflow(){
+  const screen = document.getElementById("screen");
+  const value = state.service.unbalanceDraft.value;
+  const enabled = state.service.unbalanceDraft.enabled;
+  const maxRows = 10;
+  const centerRow = maxRows;
+  const activeRows = Math.round((Math.abs(value) / 70) * maxRows);
+  const gaugeRows = [];
+  for(let row=0; row <= (maxRows * 2); row++){
+    const dist = Math.abs(row - centerRow);
+    const widthPct = 28 + ((dist / maxRows) * 72);
+    let cls = "unbGaugeRow";
+    if(row === centerRow) cls += " center";
+    if(value > 0 && row < centerRow && (centerRow - row) <= activeRows) cls += " active up";
+    if(value < 0 && row > centerRow && (row - centerRow) <= activeRows) cls += " active down";
+    gaugeRows.push(`<span class="${cls}" style="width:${widthPct.toFixed(1)}%"></span>`);
+  }
+
+  screen.innerHTML = `
+    <div class="formScreen unbScreen">
+      <div class="formTitle">${t("CLTextId_SET_UNBALANCE", "SET UNBALANCE")}</div>
+      <div class="unbLayout">
+        <div class="formBtn unbToggleBtn ${enabled ? "on" : "off"}" id="unbToggle">${enabled ? "ON" : "OFF"}</div>
+        <div class="unbPanel ${enabled ? "" : "disabled"}">
+          <div class="unbLabelTop">SOUFFLAGE</div>
+          <div class="unbMiddle">
+            <div class="unbValue">${value >= 0 ? "+" : ""}${value} %</div>
+            <div class="unbGauge">
+              ${gaugeRows.join("")}
+            </div>
+            <div class="unbArrows">
+              <div class="formBtn unbArrow ${enabled ? "" : "off"}" id="unbUp">▲</div>
+              <div class="formBtn unbArrow ${enabled ? "" : "off"}" id="unbDown">▼</div>
+            </div>
+          </div>
+          <div class="unbLabelBottom">EXTRACTION</div>
+        </div>
+      </div>
+
+      <div class="formFooter">
+        <button class="formOk">OK</button>
+        <button class="formBack">${t("CLTextId_BACK")}</button>
+      </div>
+    </div>
+  `;
+
+  screen.querySelector("#unbToggle").addEventListener("click", ()=>{
+    state.service.unbalanceDraft.enabled = !state.service.unbalanceDraft.enabled;
+    renderUnbalancedAirflow();
+  });
+  screen.querySelector("#unbUp").addEventListener("click", ()=>{
+    if(!state.service.unbalanceDraft.enabled) return;
+    state.service.unbalanceDraft.value = Math.min(70, state.service.unbalanceDraft.value + 1);
+    renderUnbalancedAirflow();
+  });
+  screen.querySelector("#unbDown").addEventListener("click", ()=>{
+    if(!state.service.unbalanceDraft.enabled) return;
+    state.service.unbalanceDraft.value = Math.max(-70, state.service.unbalanceDraft.value - 1);
+    renderUnbalancedAirflow();
+  });
   screen.querySelector(".formBack").addEventListener("click", ()=>{
-    closeOutputEditor(true);
+    closeUnbalanceEditor(true);
     goBack();
   });
   screen.querySelector(".formOk").addEventListener("click", ()=>{
-    closeOutputEditor(false);
+    closeUnbalanceEditor(false);
     goBack();
   });
 }
@@ -1068,6 +1395,8 @@ const screenRenderers = {
   settings_password: renderSettingsPassword,
   settings_rfm: renderSettingsRfm,
   output_settings: renderOutputSettings,
+  bpd_settings: renderBpdSettings,
+  unbalanced_airflow: renderUnbalancedAirflow,
   weekly_program: renderWeeklyProgram,
   weekly_view: renderWeeklyView,
   weekly_speed: renderWeeklySpeed
@@ -1281,8 +1610,9 @@ function renderList(){
     const dot = isLeaf(c) ? "dot leaf" : "dot node";
     const hint = isLeaf(c) ? "Leaf" : `${kids(c).length} sub-item(s)`;
     const enterTxt = isLeaf(c) ? "" : "Enter ->";
+    const selectedClass = idx === state.nav.selectedIndex ? " selected" : "";
     html += `
-      <div class="item" data-idx="${idx}">
+      <div class="item${selectedClass}" data-idx="${idx}">
         <div>
           <div class="label">${nodeLabel(c)}</div>
           <div class="hint">${hint}</div>
@@ -1454,6 +1784,12 @@ function render(){
     if(current().id === "output_settings" && !state.service.outputEditorActive){
       openOutputEditor();
     }
+    if(current().id === "bpd_settings" && !state.service.bpdEditorActive){
+      openBpdEditor();
+    }
+    if(current().id === "unbalanced_airflow" && !state.service.unbalanceEditorActive){
+      openUnbalanceEditor();
+    }
     screenRenderers[current().id]();
     updateButtons();
     return;
@@ -1469,6 +1805,12 @@ function goHome(){
   if(current() && current().id === "output_settings" && state.service.outputEditorActive){
     closeOutputEditor(true);
   }
+  if(current() && current().id === "bpd_settings" && state.service.bpdEditorActive){
+    closeBpdEditor(true);
+  }
+  if(current() && current().id === "unbalanced_airflow" && state.service.unbalanceEditorActive){
+    closeUnbalanceEditor(true);
+  }
   state.nav.stack = [HOME];
   state.nav.selectedIndex = 0;
   render();
@@ -1477,6 +1819,12 @@ function goBack(){
   if(!state.home.unitOn) return;
   if(current() && current().id === "output_settings" && state.service.outputEditorActive){
     closeOutputEditor(true);
+  }
+  if(current() && current().id === "bpd_settings" && state.service.bpdEditorActive){
+    closeBpdEditor(true);
+  }
+  if(current() && current().id === "unbalanced_airflow" && state.service.unbalanceEditorActive){
+    closeUnbalanceEditor(true);
   }
   if(state.nav.stack.length>1){
     state.nav.stack.pop();
@@ -1491,6 +1839,8 @@ function enterSelected(){
   if(!chosen) return;
   if(!isLeaf(chosen) || isScreenNode(chosen)){
     if(chosen.id === "output_settings") openOutputEditor();
+    if(chosen.id === "bpd_settings") openBpdEditor();
+    if(chosen.id === "unbalanced_airflow") openUnbalanceEditor();
     state.nav.stack.push(chosen);
     state.nav.selectedIndex = 0;
     render();
@@ -1498,6 +1848,15 @@ function enterSelected(){
 }
 function pageStep(dir){
   if(!state.home.unitOn) return;
+  if(current() && current().id === "output_settings" && state.service.outputEditorActive){
+    const nextPage = Math.max(0, Math.min(1, state.service.outputPage + dir));
+    if(nextPage !== state.service.outputPage){
+      state.service.outputPage = nextPage;
+      renderOutputSettings();
+      updateButtons();
+    }
+    return;
+  }
   const cur = current();
   if(state.nav.stack.length < 2) return;
 
@@ -1528,10 +1887,16 @@ function updateButtons(){
 
   btnBack.disabled = (!state.home.unitOn) || (state.nav.stack.length <= 1);
   btnHome.disabled = (!state.home.unitOn) || (state.nav.stack.length === 1);
-  btnOk.disabled   = (!state.home.unitOn) || (current() === HOME) || (kids(current()).length === 0);
+  btnOk.disabled   = (!state.home.unitOn) || (
+    (current() === HOME) ||
+    (kids(current()).length === 0 && !(current() && current().id === "output_settings"))
+  );
 
   let canPrev=false, canNext=false;
-  if(state.home.unitOn && state.nav.stack.length >= 2){
+  if(state.home.unitOn && current() && current().id === "output_settings" && state.service.outputEditorActive){
+    canPrev = state.service.outputPage > 0;
+    canNext = state.service.outputPage < 1;
+  }else if(state.home.unitOn && state.nav.stack.length >= 2){
     const cur = current();
     const parent = state.nav.stack[state.nav.stack.length-2];
     if(cur.pageGroup){
@@ -1548,10 +1913,20 @@ function updateButtons(){
   btnNext.disabled = !canNext;
 }
 
+function onOkButton(){
+  if(!state.home.unitOn) return;
+  if(current() && current().id === "output_settings" && state.service.outputEditorActive){
+    closeOutputEditor(false);
+    goBack();
+    return;
+  }
+  enterSelected();
+}
+
 /* Buttons */
 document.getElementById("btnHome").addEventListener("click", goHome);
 document.getElementById("btnBack").addEventListener("click", goBack);
-document.getElementById("btnOk").addEventListener("click", enterSelected);
+document.getElementById("btnOk").addEventListener("click", onOkButton);
 document.getElementById("btnPrev").addEventListener("click", ()=>pageStep(-1));
 document.getElementById("btnNext").addEventListener("click", ()=>pageStep(+1));
 document.getElementById("btnTheme").addEventListener("click", ()=>{
